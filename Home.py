@@ -35,6 +35,13 @@ div.block-container {
 
 st.sidebar.markdown("")
 
+default_css = """
+body {
+    -webkit-font-smoothing: antialiased;
+}
+"""
+optional_css = None
+
 if 'sidebar_expanded' not in st.session_state:
     st.session_state.sidebar_expanded = True
 
