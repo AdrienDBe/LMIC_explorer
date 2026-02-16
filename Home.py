@@ -695,20 +695,20 @@ if 'selected_pub_type' not in st.session_state:
 st.sidebar.markdown("### Filters")
 
 # Income Category
-income_category = st.sidebar.pills(
+income_category = st.sidebar.radio(
     "Filter by Income Category:",
     ["All regions", "LMIC"],
-    selection_mode="single",
+    index=0,
     key="income_category_input"
 )
 st.session_state.income_category = income_category
 
 # Income Level (if LMIC selected)
 if income_category == "LMIC" and filter_options['lmic_levels']:
-    selected_income = st.sidebar.pills(
+    selected_income = st.sidebar.multiselect(
         "Narrow Income level:",
         filter_options['lmic_levels'],
-        selection_mode="multi",
+        default=filter_options['lmic_levels'],
         key="income_level_input"
     )
     if not selected_income:
@@ -721,10 +721,10 @@ else:
 st.sidebar.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
 
 # Region
-selected_region_raw = st.sidebar.pills(
+selected_region_raw = st.sidebar.multiselect(
     "Filter by Region:",
     filter_options['regions'],
-    selection_mode="multi",
+    default=['All'],
     key="region_input"
 )
 selected_region = handle_all_selection(
@@ -736,10 +736,10 @@ st.session_state.selected_region = selected_region
 st.sidebar.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
 
 # Regional Hubs
-regional_hubs_raw = st.sidebar.pills(
+regional_hubs_raw = st.sidebar.multiselect(
     "Regional Excellence Hub:",
-    options=["All", "A*STAR SIgN", "Institut Pasteur Network", "KEMRI-Wellcome", "AHRI"],
-    selection_mode="multi",
+    ["All", "A*STAR SIgN", "Institut Pasteur Network", "KEMRI-Wellcome", "AHRI"],
+    default=["All"],
     key="regional_hubs_input"
 )
 
@@ -755,10 +755,10 @@ st.session_state.regional_hubs = regional_hubs
 st.sidebar.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
 
 # Publication Type
-selected_pub_type_raw = st.sidebar.pills(
+selected_pub_type_raw = st.sidebar.multiselect(
     "Publication Type:",
     filter_options['pub_types'],
-    selection_mode="multi",
+    default=['All'],
     key="pub_type_input"
 )
 selected_pub_type = handle_all_selection(
@@ -925,23 +925,12 @@ else:
 
     col1_table, col2_table = st.columns([1, 2])
     with col2_table:
-        if len(available_countries_for_pills) > 12:
-            with st.popover("🌍 Select Countries"):
-                selected_countries_pills = st.pills(
-                    "Filter by Countries:",
-                    options=["All"] + available_countries_for_pills,
-                    selection_mode="multi",
-                    default=["All"],
-                    key="countries_pills_input"
-                )
-        else:
-            selected_countries_pills = st.pills(
-                "Filter by Countries:",
-                options=["All"] + available_countries_for_pills,
-                selection_mode="multi",
-                default=["All"],
-                key="countries_pills_input"
-            )
+        selected_countries_pills = st.multiselect(
+            "Filter by Countries:",
+            options=["All"] + available_countries_for_pills,
+            default=["All"],
+            key="countries_pills_input"
+        )
         
         if "All" in selected_countries_pills and len(selected_countries_pills) > 1:
             selected_countries_pills = [item for item in selected_countries_pills if item != "All"]
