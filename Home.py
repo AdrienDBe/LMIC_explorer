@@ -50,7 +50,6 @@ else:
     st.session_state.last_rerun_time = current_time
     st.session_state.first_run = False
 
-# ADD THIS NEW SECTION HERE:
 # Track what's causing reruns
 if 'rerun_causes' not in st.session_state:
     st.session_state.rerun_causes = []
@@ -120,16 +119,14 @@ st.set_page_config(
     }
 )
 
-# Right after st.set_page_config, add:
-
 # Debug panel (remove after fixing)
-with st.sidebar.expander("🐛 Debug Info", expanded=True):  # Changed to expanded=True
+with st.sidebar.expander("🐛 Debug Info", expanded=False):
     st.write(f"**Rerun count:** {st.session_state.rerun_count}")
     current_mem, peak_mem = get_memory_usage()
     st.write(f"**Memory:** {current_mem:.1f}MB / {peak_mem:.1f}MB")
     st.write(f"**Session state keys:** {len(st.session_state)}")
     
-    # NEW: Show recent rerun causes
+    # Show recent rerun causes
     if st.session_state.get('rerun_causes'):
         st.write("**Recent rerun causes:**")
         for cause in st.session_state.rerun_causes[-5:]:  # Last 5
@@ -325,8 +322,8 @@ button[kind="pillsActive"][data-testid="stBaseButton-pillsActive"]:hover {
 
 /* ==================== POPOVER BUTTONS ==================== */
 
-/* Popover button - match unselected pill
-
+/* Popover button - match unselected pill */
+
 /* ==================== EXPANDERS & CONTAINERS ==================== */
 
 [data-testid="stExpander"] {
@@ -552,7 +549,7 @@ def load_and_preprocess_data(filepath):
         st.error(f"Error loading data: {str(e)}")
         return None, {}
 
-@st.cache_data(hash_funcs={pd.DataFrame: lambda x: id(x)})  # Hash by ID not content
+@st.cache_data(hash_funcs={pd.DataFrame: lambda x: id(x)})
 def get_unique_values(df, column):
     """Get unique values for a column with caching"""
     if column in df.columns:
@@ -646,9 +643,10 @@ def filter_data_by_selections(df, income_category, selected_income, selected_reg
 
     return filtered_df
 
+@st.cache_data(hash_funcs={pd.DataFrame: lambda x: id(x)})
 def calculate_map_data(df, map_display_type, regional_hubs_tuple):
-    """Calculate country counts for map display - REMOVED CACHING for real-time updates"""
-    map_filtered_df = df
+    """Calculate country counts for map display"""
+    map_filtered_df = df.copy()
     
     # Convert tuple back to list for processing
     regional_hubs = list(regional_hubs_tuple) if isinstance(regional_hubs_tuple, tuple) else regional_hubs_tuple
@@ -661,7 +659,7 @@ def calculate_map_data(df, map_display_type, regional_hubs_tuple):
                 selected_countries.extend(hub_countries[hub])
         
         if selected_countries:
-            map_filtered_df = df[df['Country'].isin(selected_countries)].copy()  # Copy only when filtering
+            map_filtered_df = df[df['Country'].isin(selected_countries)].copy()
 
     if map_display_type == "Publications":
         country_counts = map_filtered_df.groupby('Country')['Publications'].sum().reset_index()
@@ -677,13 +675,14 @@ def calculate_map_data(df, map_display_type, regional_hubs_tuple):
         display_label = "Organizations"
     
     country_counts = country_counts[country_counts['Country'] != 'Unknown']
-    country_counts = country_counts[country_counts['Count'] > 0]  # Only countries with data
+    country_counts = country_counts[country_counts['Count'] > 0]
     country_counts = country_counts.sort_values('Count', ascending=False)
     
     return country_counts, display_label, map_filtered_df
 
+@st.cache_data(hash_funcs={pd.DataFrame: lambda x: id(x)})
 def calculate_search_results(df, search_term, search_org, selected_countries_pills, regional_hubs_tuple):
-    """Calculate search results - REMOVED CACHING for real-time updates"""
+    """Calculate search results"""
     search_results = df.copy()
     
     # Convert tuple back to list for processing
@@ -714,7 +713,7 @@ def calculate_search_results(df, search_term, search_org, selected_countries_pil
     return search_results
     
 def process_grouped_data(search_results, display_type):
-    """Process grouped data - SIMPLIFIED"""
+    """Process grouped data"""
     
     try:
         # Make a clean copy
@@ -852,11 +851,8 @@ def initialize_app():
         if os.path.exists(default_path):
             df, country_name_mapping = load_and_preprocess_data(default_path)
             data_path = default_path
-        elif os.path.exists(fallback_path):
-            df, country_name_mapping = load_and_preprocess_data(fallback_path)
-            data_path = fallback_path
         else:
-            st.error(f"❌ File not found. Please ensure the data file exists.")
+            st.error(f"❌ File not found. Please ensure the data file exists at {default_path}")
             st.stop()
     except Exception as e:
         st.error(f"❌ Error loading data: {str(e)}")
@@ -924,10 +920,7 @@ if st.session_state.rerun_count > 10:
             st.warning("Try refreshing the page (F5) to reset the app.")
             st.stop()
 
-# --- SIDEBAR FILTERS (SIMPLIFIED TO PREVENT RERUN LOOPS) ---
-
-# Remove all callbacks - they cause loops
-# Just use widget keys and read directly from session_state
+# --- SIDEBAR FILTERS ---
 
 if 'Income Level' in df.columns:
     income_category = st.sidebar.pills(
@@ -947,7 +940,7 @@ if 'Income Level' in df.columns:
             filter_options['lmic_levels'],
             selection_mode="multi",
             default=st.session_state.last_income_selection,
-            key="income_level_pills_v2"  # Changed key to reset state
+            key="income_level_pills"
         )
         
         # Only update if not empty
@@ -970,7 +963,7 @@ selected_region_raw = st.sidebar.pills(
     filter_options['regions'],
     selection_mode="multi",
     default=['All'],
-    key="region_pills_v2"  # Changed key
+    key="region_pills"
 )
 selected_region = handle_all_selection(tuple(selected_region_raw), tuple(filter_options['regions']))
 
@@ -982,7 +975,7 @@ regional_hubs_raw = st.sidebar.pills(
     options=["All", "A*STAR SIgN", "Institut Pasteur Network", "KEMRI-Wellcome", "AHRI"],
     selection_mode="multi",
     default=["All"],
-    key="regional_hubs_pills_v2"  # Changed key
+    key="regional_hubs_pills"
 )
 
 if "All" in regional_hubs_raw and len(regional_hubs_raw) > 1:
@@ -1000,11 +993,11 @@ selected_pub_type_raw = st.sidebar.pills(
     filter_options['pub_types'],
     selection_mode="multi",
     default=['All'],
-    key="pub_type_pills_v2"  # Changed key
+    key="pub_type_pills"
 )
 selected_pub_type = handle_all_selection(tuple(selected_pub_type_raw), tuple(filter_options['pub_types']))
 
-# Create stable filter signature - only if values actually changed
+# === FIXED: Single filter signature check (removed duplicate code) ===
 new_filter_signature = (
     income_category,
     tuple(sorted(selected_income)) if isinstance(selected_income, list) else selected_income,
@@ -1012,50 +1005,21 @@ new_filter_signature = (
     tuple(sorted(selected_pub_type)) if isinstance(selected_pub_type, list) else selected_pub_type
 )
 
-# CRITICAL: Only log when filter actually changes
-filter_changed = False
+# Only update if filter actually changed
 if 'filter_signature' not in st.session_state:
     st.session_state.filter_signature = new_filter_signature
-    filter_changed = True
-elif st.session_state.filter_signature != new_filter_signature:
-    st.session_state.filter_signature = new_filter_signature
-    filter_changed = True
 
-# Always recalculate (fast operation - don't cache DataFrames)
-if filter_changed:
-    with st.spinner("Applying filters..."):
-        filtered_df = filter_data_by_selections(df, income_category, selected_income, selected_region, selected_pub_type, ['All'])
-        log_memory("After filtering")
-else:
-    filtered_df = filter_data_by_selections(df, income_category, selected_income, selected_region, selected_pub_type, ['All'])
-    
-# Create stable filter signature - only if values actually changed
-new_filter_signature = (
-    income_category,
-    tuple(sorted(selected_income)) if isinstance(selected_income, list) else selected_income,
-    tuple(sorted(selected_region)) if isinstance(selected_region, list) else selected_region,
-    tuple(sorted(selected_pub_type)) if isinstance(selected_pub_type, list) else selected_pub_type
+if st.session_state.filter_signature != new_filter_signature:
+    st.session_state.filter_signature = new_filter_signature
+
+# Always apply filter (it's fast)
+filtered_df = filter_data_by_selections(
+    df, income_category, selected_income, selected_region, 
+    selected_pub_type, ['All']
 )
 
-# CRITICAL: Only log when filter actually changes
-filter_changed = False
-if 'filter_signature' not in st.session_state:
-    st.session_state.filter_signature = new_filter_signature
-    filter_changed = True
-elif st.session_state.filter_signature != new_filter_signature:
-    st.session_state.filter_signature = new_filter_signature
-    filter_changed = True
+log_memory("After filtering")
 
-# Always recalculate (fast operation - don't cache DataFrames)
-if filter_changed:
-    with st.spinner("Applying filters..."):
-        filtered_df = filter_data_by_selections(df, income_category, selected_income, selected_region, selected_pub_type, ['All'])
-        log_memory("After filtering")
-else:
-    filtered_df = filter_data_by_selections(df, income_category, selected_income, selected_region, selected_pub_type, ['All'])
-
-# --- MAIN CONTENT ---
-    
 # --- MAIN CONTENT ---
 
 if 'Country' not in filtered_df.columns:
@@ -1071,7 +1035,7 @@ else:
             key="map_display_type_radio"
         )
     
-        # Recalculate directly - it's fast and prevents memory buildup
+        # Calculate map data
         country_counts, display_label, map_filtered_df = calculate_map_data(
             filtered_df, map_display_type, tuple(regional_hubs)
         )
@@ -1160,7 +1124,7 @@ else:
             "AHRI": "#4c956c"
         }
         
-        # IMPORTANT: Only use display_data (after hiding top countries if applicable)
+        # Only use display_data (after hiding top countries if applicable)
         countries_with_data = set(display_data['Country'].tolist())
         
         hubs_to_show = []
@@ -1210,7 +1174,7 @@ else:
             countrycolor='rgba(200, 200, 200, 0.5)',
             coastlinecolor='rgba(200, 200, 200, 0.5)',
             showlakes=False,
-            fitbounds="locations",  # This will fit to the choropleth data
+            fitbounds="locations",
             visible=True
         )
         
@@ -1234,8 +1198,8 @@ else:
         )
         
         st.plotly_chart(fig_heatmap, use_container_width=True)
-        del fig_heatmap  # Delete the figure object
-        gc.collect()  # Clean up after plotly
+        del fig_heatmap
+        gc.collect()
 
         
     st.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
@@ -1292,20 +1256,17 @@ else:
         label_visibility="collapsed"
     )
 
-    # Calculate fresh each time
-    # Cache search results in session_state
-    # Cache search results in session_state
-    # Recalculate directly - prevents memory buildup
+    # Calculate search results
     search_results = calculate_search_results(
         filtered_df, search_term, search_org, selected_countries_pills, tuple(regional_hubs)
     )
     
-    # Don't cache the groupby - do it fresh
+    # Process grouped data
     grouped_data, display_cols = process_grouped_data(search_results, display_type)
 
     with st.expander("View Detailed Table", expanded=False):
         if len(grouped_data) > 0:
-            # CORRECT COUNT - from grouped_data, not search_results
+            # CORRECT COUNT - from grouped_data
             result_count = len(grouped_data)
             col1_table.write(f"Found {result_count} {display_type.lower()} matching your criteria")
             
@@ -1403,6 +1364,6 @@ else:
             )
             
             st.plotly_chart(fig_scatter, use_container_width=True)
-            del fig_scatter  # Delete the figure object
-            gc.collect()  # Clean up after plotly
+            del fig_scatter
+            gc.collect()
             st.caption(f"💡 Dot size represents number of publications. Hover over dots for detailed information.")
