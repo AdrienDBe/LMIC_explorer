@@ -140,12 +140,39 @@ button:hover {
     background-color: #E8E8E8 !important;
     color: #262730 !important;
     border: 1px solid #D3D3D3 !important;
+    font-weight: 500 !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: 20px !important;
+    transition: all 0.2s ease !important;
 }
 
-.stPills button[data-testid*="pill-button"]:not([aria-pressed="false"]) {
-    background-color: #4682b4 !important;
+/* Unselected pill button hover */
+.stPills button:hover:not([aria-pressed="true"]) {
+    background-color: #D3D3D3 !important;
+    color: #262730 !important;
+    border: 1px solid #B0B0B0 !important;
+}
+
+/* Selected pill buttons - #82C5E0 background, white text */
+.stPills button[aria-pressed="true"] {
+    background-color: #82C5E0 !important;
     color: #FFFFFF !important;
-    border: 1px solid #4682b4 !important;
+    border: 1px solid #82C5E0 !important;
+    font-weight: 600 !important;
+}
+
+/* Selected pill button hover */
+.stPills button[aria-pressed="true"]:hover {
+    background-color: #6BADCC !important;
+    color: #FFFFFF !important;
+    border: 1px solid #6BADCC !important;
+}
+
+/* Alternative selector - ensure all selected states work */
+.stPills button:not([aria-pressed="false"]) {
+    background-color: #82C5E0 !important;
+    color: #FFFFFF !important;
+    border: 1px solid #82C5E0 !important;
 }
 
 /* ==================== DATAFRAMES & TABLES ==================== */
