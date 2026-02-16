@@ -124,13 +124,17 @@ input:focus, textarea:focus, select:focus {
 
 /* ==================== BUTTONS ==================== */
 
-button, [data-testid="baseButton-primary"] {
+/* ==================== BUTTONS ==================== */
+
+/* Generic buttons - but NOT pill buttons */
+button:not([kind="pills"]):not([kind="pillsActive"]), 
+[data-testid="baseButton-primary"] {
     background-color: #a7d4fa !important;
     color: #000000 !important;
     border: none !important;
 }
 
-button:hover {
+button:not([kind="pills"]):not([kind="pillsActive"]):hover {
     background-color: #73b9f5 !important;
     color: #FFFFFF !important;
 }
@@ -148,10 +152,6 @@ button:hover {
     background-color: #F0F0F0 !important;
     color: #262730 !important;
     border: 1px solid #D3D3D3 !important;
-    font-weight: 500 !important;
-    padding: 0.5rem 1rem !important;
-    border-radius: 20px !important;
-    transition: all 0.2s ease !important;
 }
 
 /* Unselected pill button hover */
@@ -167,9 +167,6 @@ button:hover {
     color: #FFFFFF !important;
     border: 1px solid #82C5E0 !important;
     font-weight: 600 !important;
-    padding: 0.5rem 1rem !important;
-    border-radius: 20px !important;
-    transition: all 0.2s ease !important;
 }
 
 /* Selected pill button hover */
