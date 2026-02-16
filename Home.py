@@ -958,14 +958,23 @@ else:
 with st.sidebar:
     st.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
 
+# Initialize once at start
+if 'selected_region' not in st.session_state:
+    st.session_state.selected_region = ['All']
+
+# Get the widget value
 selected_region_raw = st.sidebar.pills(
     "Filter by Region:",
     filter_options['regions'],
     selection_mode="multi",
-    default=['All'],
-    key="region_pills"
+    key="region_input"  # Stable key
 )
-selected_region = handle_all_selection(tuple(selected_region_raw), tuple(filter_options['regions']))
+
+# Process it
+selected_region = handle_all_selection(...)
+
+# Store it back (prevents state thrashing)
+st.session_state.selected_region = selected_region
 
 with st.sidebar:
     st.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
