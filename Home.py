@@ -487,7 +487,6 @@ def get_country_coordinates():
         "Zimbabwe": {"lat": -19.0154, "lon": 29.1549}
     }
     
-@st.cache_data
 def filter_data_by_selections(df, income_category, selected_income, selected_region, selected_pub_type, selected_oa):
     """Apply filters to dataframe"""
     filtered_df = df.copy()
@@ -506,7 +505,6 @@ def filter_data_by_selections(df, income_category, selected_income, selected_reg
 
     return filtered_df
 
-@st.cache_data
 def calculate_map_data(df, map_display_type, regional_hubs_tuple):
     """Calculate country counts for map display - REMOVED CACHING for real-time updates"""
     map_filtered_df = df
@@ -543,7 +541,6 @@ def calculate_map_data(df, map_display_type, regional_hubs_tuple):
     
     return country_counts, display_label, map_filtered_df
 
-@st.cache_data
 def calculate_search_results(df, search_term, search_org, selected_countries_pills, regional_hubs_tuple):
     """Calculate search results - REMOVED CACHING for real-time updates"""
     search_results = df.copy()
@@ -575,7 +572,6 @@ def calculate_search_results(df, search_term, search_org, selected_countries_pil
     
     return search_results
     
-@st.cache_data
 def process_grouped_data(search_results, display_type):
     """Process grouped data - SIMPLIFIED"""
     
@@ -825,14 +821,15 @@ selected_pub_type_raw = st.sidebar.pills(
 )
 selected_pub_type = handle_all_selection(tuple(selected_pub_type_raw), tuple(filter_options['pub_types']))
 
-# Apply filters
-filtered_df = filter_data_by_selections(
-    df, 
-    income_category, 
-    tuple(selected_income), 
-    tuple(selected_region), 
-    tuple(selected_pub_type), 
-    ['All']
+# Apply filters - cache in session_state
+filter_signature = f"{income_category}_{tuple(selected_income)}_{tuple(selected_region)}_{tuple(selected_pub_type)}"
+
+if 'filter_signature' not in st.session_state or st.session_state.filter_signature != filter_signature:
+    filtered_df = filter_data_by_selections(df, income_category, selected_income, selected_region, selected_pub_type, ['All'])
+    st.session_state.filtered_df = filtered_df
+    st.session_state.filter_signature = filter_signature
+else:
+    filtered_df = st.session_state.filtered_df
 )
 # --- MAIN CONTENT ---
 
@@ -1066,9 +1063,17 @@ else:
     )
 
     # Calculate fresh each time
-    search_results = calculate_search_results(
-        filtered_df, search_term, search_org, tuple(selected_countries_pills), tuple(regional_hubs)
-    )
+    # Cache search results in session_state
+    search_signature = f"{search_term}_{search_org}_{tuple(selected_countries_pills)}_{tuple(regional_hubs)}_{filter_signature}"
+    
+    if 'search_signature' not in st.session_state or st.session_state.search_signature != search_signature:
+        search_results = calculate_search_results(
+            filtered_df, search_term, search_org, selected_countries_pills, tuple(regional_hubs)
+        )
+        st.session_state.search_results = search_results
+        st.session_state.search_signature = search_signature
+    else:
+        search_results = st.session_state.search_results
 
     # Don't cache the groupby - do it fresh
     grouped_data, display_cols = process_grouped_data(search_results, display_type)
