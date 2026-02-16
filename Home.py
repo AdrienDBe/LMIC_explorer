@@ -23,6 +23,14 @@ st.set_page_config(
 
 st.markdown("""
 <style>
+/* FORCE LIGHT MODE */
+html, body, [data-testid="stAppViewContainer"] {
+    background-color: #FFFFFF !important;
+    color: #262730 !important;
+}
+[data-testid="stSidebar"] {
+    background-color: #F0F2F6 !important;
+}
 div.block-container {
     padding-top: 0.5rem !important;
 }
