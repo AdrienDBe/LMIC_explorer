@@ -821,49 +821,63 @@ filter_options = get_filter_options(df)
 
 # --- SIDEBAR FILTERS ---
 
-# --- SIDEBAR FILTERS ---
+# Callback functions to update session state WITHOUT triggering extra reruns
+def update_income_category():
+    st.session_state.income_category_value = st.session_state.income_category_pills
 
-# Initialize session state for filters if not exists
-# Initialize defaults in session_state ONCE
-if 'income_category_default' not in st.session_state:
-    st.session_state.income_category_default = "LMIC"
+def update_income_level():
+    st.session_state.income_level_value = st.session_state.income_level_pills
 
-if 'selected_income_default' not in st.session_state:
+def update_region():
+    st.session_state.region_value = st.session_state.region_pills
+
+def update_regional_hubs():
+    st.session_state.regional_hubs_value = st.session_state.regional_hubs_pills
+
+def update_pub_type():
+    st.session_state.pub_type_value = st.session_state.pub_type_pills
+
+# Initialize values in session_state ONCE
+if 'income_category_value' not in st.session_state:
+    st.session_state.income_category_value = "LMIC"
+
+if 'income_level_value' not in st.session_state:
     if 'Income Level' in df.columns and filter_options['lmic_levels']:
-        st.session_state.selected_income_default = filter_options['lmic_levels']
+        st.session_state.income_level_value = filter_options['lmic_levels']
     else:
-        st.session_state.selected_income_default = ['All']
+        st.session_state.income_level_value = ['All']
 
-if 'selected_region_default' not in st.session_state:
-    st.session_state.selected_region_default = ['All']
+if 'region_value' not in st.session_state:
+    st.session_state.region_value = ['All']
 
-if 'regional_hubs_default' not in st.session_state:
-    st.session_state.regional_hubs_default = ["All"]
+if 'regional_hubs_value' not in st.session_state:
+    st.session_state.regional_hubs_value = ["All"]
 
-if 'selected_pub_type_default' not in st.session_state:
-    st.session_state.selected_pub_type_default = ['All']
+if 'pub_type_value' not in st.session_state:
+    st.session_state.pub_type_value = ['All']
 
-# Now create widgets with stable defaults from session_state
+# Create widgets with callbacks
 if 'Income Level' in df.columns:
-    income_category = st.sidebar.pills(
+    st.sidebar.pills(
         "Filter by Income Category:",
         ["All regions", "LMIC"],
         selection_mode="single",
-        default=st.session_state.income_category_default,
-        key="income_category_pills"
+        default=st.session_state.income_category_value,
+        key="income_category_pills",
+        on_change=update_income_category
     )
+    income_category = st.session_state.income_category_value
     
     if income_category == "LMIC" and filter_options['lmic_levels']:
-        selected_lmic_raw = st.sidebar.pills(
+        st.sidebar.pills(
             "Narrow Income level:",
             filter_options['lmic_levels'],
             selection_mode="multi",
-            default=st.session_state.selected_income_default,
-            key="income_level_pills"
+            default=st.session_state.income_level_value,
+            key="income_level_pills",
+            on_change=update_income_level
         )
-        selected_income = selected_lmic_raw if selected_lmic_raw else filter_options['lmic_levels']
-        # Update default for next run
-        st.session_state.selected_income_default = selected_income
+        selected_income = st.session_state.income_level_value if st.session_state.income_level_value else filter_options['lmic_levels']
     else:
         selected_income = [] if income_category == "LMIC" else ['All']
 else:
@@ -873,46 +887,76 @@ else:
 with st.sidebar:
     st.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
 
-selected_region_raw = st.sidebar.pills(
+st.sidebar.pills(
     "Filter by Region:",
     filter_options['regions'],
     selection_mode="multi",
-    default=st.session_state.selected_region_default,
-    key="region_pills"
+    default=st.session_state.region_value,
+    key="region_pills",
+    on_change=update_region
 )
+selected_region_raw = st.session_state.region_value
 selected_region = handle_all_selection(tuple(selected_region_raw), tuple(filter_options['regions']))
-st.session_state.selected_region_default = selected_region
 
 with st.sidebar:
     st.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
 
-regional_hubs = st.sidebar.pills(
+st.sidebar.pills(
     "Regional Excellence Hub:",
     options=["All", "A*STAR SIgN", "Institut Pasteur Network", "KEMRI-Wellcome", "AHRI"],
     selection_mode="multi",
-    default=st.session_state.regional_hubs_default,
-    key="regional_hubs_pills"
+    default=st.session_state.regional_hubs_value,
+    key="regional_hubs_pills",
+    on_change=update_regional_hubs
 )
+regional_hubs = st.session_state.regional_hubs_value
 
 if "All" in regional_hubs and len(regional_hubs) > 1:
     regional_hubs = [item for item in regional_hubs if item != "All"]
 elif not regional_hubs:
     regional_hubs = ["All"]
-st.session_state.regional_hubs_default = regional_hubs
 
 with st.sidebar:
     st.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
 
-selected_pub_type_raw = st.sidebar.pills(
+st.sidebar.pills(
     "Publication Type:",
     filter_options['pub_types'],
     selection_mode="multi",
-    default=st.session_state.selected_pub_type_default,
-    key="pub_type_pills"
+    default=st.session_state.pub_type_value,
+    key="pub_type_pills",
+    on_change=update_pub_type
 )
+selected_pub_type_raw = st.session_state.pub_type_value
 selected_pub_type = handle_all_selection(tuple(selected_pub_type_raw), tuple(filter_options['pub_types']))
-st.session_state.selected_pub_type_default = selected_pub_type
 
+# Create stable filter signature - only if values actually changed
+new_filter_signature = (
+    income_category,
+    tuple(sorted(selected_income)) if isinstance(selected_income, list) else selected_income,
+    tuple(sorted(selected_region)) if isinstance(selected_region, list) else selected_region,
+    tuple(sorted(selected_pub_type)) if isinstance(selected_pub_type, list) else selected_pub_type
+)
+
+# CRITICAL: Only update if it ACTUALLY changed
+if 'filter_signature' not in st.session_state:
+    st.session_state.filter_signature = new_filter_signature
+    
+filter_changed = (st.session_state.filter_signature != new_filter_signature)
+
+if filter_changed:
+    with st.spinner("Applying filters..."):
+        filtered_df = filter_data_by_selections(df, income_category, selected_income, selected_region, selected_pub_type, ['All'])
+        st.session_state.filtered_df = filtered_df
+        st.session_state.filter_signature = new_filter_signature
+        log_memory("After filtering")
+elif 'filtered_df' in st.session_state:
+    filtered_df = st.session_state.filtered_df
+else:
+    # First run
+    filtered_df = filter_data_by_selections(df, income_category, selected_income, selected_region, selected_pub_type, ['All'])
+    st.session_state.filtered_df = filtered_df
+    
 # Create stable filter signature using sorted tuples
 filter_signature = (
     income_category,
