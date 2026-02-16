@@ -102,49 +102,69 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ==================== BUTTONS ==================== */
 
-/* Generic buttons - exclude pills AND radio buttons */
-button:not([kind="pills"]):not([kind="pillsActive"]):not([role="radio"]):not(.st-emotion-cache-*[data-testid*="Radio"]), 
-[data-testid="baseButton-primary"] {
-    background-color: #a7d4fa !important;
-    color: #000000 !important;
-    border: none !important;
-}
-
-button:not([kind="pills"]):not([kind="pillsActive"]):not([role="radio"]):hover {
-    background-color: #73b9f5 !important;
-    color: #FFFFFF !important;
-}
-
 /* ==================== RADIO BUTTONS ==================== */
 
-/* Radio button container */
-[data-testid="stRadio"] {
-    background-color: transparent !important;
-}
-
-/* Radio button circles - unselected */
+/* Radio button circles - change accent color from red to blue */
 [data-testid="stRadio"] input[type="radio"] {
     accent-color: #82C5E0 !important;
 }
 
-/* Radio button circles - selected (remove red) */
 [data-testid="stRadio"] input[type="radio"]:checked {
     accent-color: #82C5E0 !important;
-    background-color: #82C5E0 !important;
-    border-color: #82C5E0 !important;
 }
 
-/* Radio button labels */
-[data-testid="stRadio"] label {
+/* ==================== PILL BUTTONS ==================== */
+
+/* Base styling for all pill buttons */
+.stPills button {
+    padding: 0.5rem 1rem !important;
+    border-radius: 20px !important;
+    transition: all 0.2s ease !important;
+    font-weight: 500 !important;
+}
+
+/* Unselected pill buttons - gray background */
+.stPills button[kind="pills"],
+button.st-emotion-cache-b0zc2i.e1mwqyj910 {
+    background-color: #F0F0F0 !important;
     color: #262730 !important;
+    border: 1px solid #D3D3D3 !important;
 }
 
-/* Force override any red styling */
-[data-testid="stRadio"] * {
+/* Unselected pill button hover */
+.stPills button[kind="pills"]:hover,
+button.st-emotion-cache-b0zc2i.e1mwqyj910:hover {
+    background-color: #E8E8E8 !important;
+    color: #262730 !important;
+    border: 1px solid #B0B0B0 !important;
+}
+
+/* Selected pill buttons - blue background with MAXIMUM specificity */
+button.st-emotion-cache-tx7mgd.e1mwqyj911,
+button.st-emotion-cache-tx7mgd.e1mwqyj911[kind="pillsActive"],
+.stPills button[kind="pillsActive"],
+button[kind="pillsActive"][data-testid="stBaseButton-pillsActive"] {
+    background-color: #82C5E0 !important;
+    color: #FFFFFF !important;
+    border: 1px solid #82C5E0 !important;
     border-color: #82C5E0 !important;
+    font-weight: 600 !important;
 }
 
+/* Selected pill button hover */
+button.st-emotion-cache-tx7mgd.e1mwqyj911:hover,
+.stPills button[kind="pillsActive"]:hover,
+button[kind="pillsActive"][data-testid="stBaseButton-pillsActive"]:hover {
+    background-color: #6BADCC !important;
+    color: #FFFFFF !important;
+    border: 1px solid #6BADCC !important;
+    border-color: #6BADCC !important;
+}
 
+/* ==================== POPOVER BUTTONS ==================== */
+
+/* Popover button - match unselected pill
+
 /* ==================== EXPANDERS & CONTAINERS ==================== */
 
 [data-testid="stExpander"] {
