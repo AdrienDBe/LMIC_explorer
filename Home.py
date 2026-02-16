@@ -830,7 +830,7 @@ if 'filter_signature' not in st.session_state or st.session_state.filter_signatu
     st.session_state.filter_signature = filter_signature
 else:
     filtered_df = st.session_state.filtered_df
-)
+
 # --- MAIN CONTENT ---
 
 if 'Country' not in filtered_df.columns:
