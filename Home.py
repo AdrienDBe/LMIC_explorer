@@ -102,15 +102,39 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ==================== BUTTONS ==================== */
 
-/* ==================== RADIO BUTTONS ==================== */
+/* ==================== RADIO BUTTONS - EXACT FIX ==================== */
 
-/* Radio button circles - change accent color from red to blue */
-[data-testid="stRadio"] input[type="radio"] {
-    accent-color: #82C5E0 !important;
+/* Radio button outer circle - unselected */
+div.st-ao.st-b0 {
+    border-color: #D3D3D3 !important;
+    background-color: transparent !important;
 }
 
-[data-testid="stRadio"] input[type="radio"]:checked {
-    accent-color: #82C5E0 !important;
+/* Radio button outer circle - SELECTED (remove red) */
+div.st-ao.st-c2 {
+    border-color: #82C5E0 !important;
+    background-color: transparent !important;
+}
+
+/* Radio button inner dot - unselected */
+div.st-bi.st-bj.st-bk {
+    background-color: transparent !important;
+}
+
+/* Radio button inner dot - SELECTED (change from red to blue) */
+div.st-c3.st-c4.st-c5 {
+    background-color: #82C5E0 !important;
+}
+
+/* Radio label hover effects */
+label[data-baseweb="radio"]:hover div.st-ao {
+    border-color: #82C5E0 !important;
+}
+
+/* Hide the actual radio input */
+input[type="radio"].st-bl {
+    opacity: 0 !important;
+    position: absolute !important;
 }
 
 /* ==================== PILL BUTTONS ==================== */
