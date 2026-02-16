@@ -102,41 +102,42 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ==================== BUTTONS ==================== */
 
-/* ==================== RADIO BUTTONS - CORRECT STYLING ==================== */
+/* ==================== RADIO BUTTONS - HIGHER SPECIFICITY ==================== */
 
 /* Radio button outer circle - UNSELECTED (grey border) */
-div.st-ao.st-b0 {
-    border-color: #D3D3D3 !important;
-    border-width: 2px !important;
+div.st-ao.st-b0.st-b1.st-b2.st-b3.st-b4.st-b5,
+label[data-baseweb="radio"] div.st-ao.st-b0 {
+    border: 2px solid #D3D3D3 !important;
     background-color: white !important;
 }
 
 /* Radio button outer circle - SELECTED (blue border) */
-div.st-ao.st-c2 {
-    border-color: #82C5E0 !important;
-    border-width: 2px !important;
+div.st-ao.st-c2.st-b1.st-b2.st-b3.st-b4,
+label[data-baseweb="radio"] div.st-ao.st-c2 {
+    border: 2px solid #82C5E0 !important;
     background-color: white !important;
 }
 
-/* Radio button inner dot - UNSELECTED (invisible/transparent) */
-div.st-bi.st-bj.st-bk {
+/* Radio button inner dot - UNSELECTED (transparent) */
+div.st-bi.st-bj.st-bk,
+label[data-baseweb="radio"] div.st-bi {
     background-color: transparent !important;
 }
 
-/* Radio button inner dot - SELECTED (blue dot) */
-div.st-c3.st-c4.st-c5 {
+/* Radio button inner dot - SELECTED (blue) */
+div.st-c3.st-c4.st-c5,
+label[data-baseweb="radio"] div.st-c3 {
     background-color: #82C5E0 !important;
 }
 
-/* Radio label hover effects */
-label[data-baseweb="radio"]:hover div.st-ao {
-    border-color: #82C5E0 !important;
+/* Force all st-ao divs to have visible borders */
+div.st-ao {
+    border-style: solid !important;
 }
 
-/* Hide the actual radio input but keep functionality */
-input[type="radio"].st-bl {
-    opacity: 0 !important;
-    position: absolute !important;
+/* Radio label hover */
+label[data-baseweb="radio"]:hover div.st-ao {
+    border-color: #82C5E0 !important;
 }
 /* ==================== PILL BUTTONS ==================== */
 
