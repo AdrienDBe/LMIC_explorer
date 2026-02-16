@@ -131,14 +131,14 @@ button, [data-testid="baseButton-primary"] {
 }
 
 button:hover {
-    background-color: #E8E8E8 !important;
+    background-color: #73b9f5 !important;
     color: #FFFFFF !important;
 }
 
 /* Pill buttons */
 .stPills button {
-    background-color: #E8E8E8 !important;
-    color: #262730 !important;
+    background-color: #6BC7E4 !important;
+    color: #FFFFFF !important;
     border: 1px solid #D3D3D3 !important;
     font-weight: 500 !important;
     padding: 0.5rem 1rem !important;
