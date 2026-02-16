@@ -486,7 +486,8 @@ def get_country_coordinates():
         "Zambia": {"lat": -13.1339, "lon": 27.8493},
         "Zimbabwe": {"lat": -19.0154, "lon": 29.1549}
     }
-
+    
+@st.cache_data
 def filter_data_by_selections(df, income_category, selected_income, selected_region, selected_pub_type, selected_oa):
     """Apply filters to dataframe"""
     filtered_df = df.copy()
@@ -508,7 +509,7 @@ def filter_data_by_selections(df, income_category, selected_income, selected_reg
 @st.cache_data
 def calculate_map_data(df, map_display_type, regional_hubs_tuple):
     """Calculate country counts for map display - REMOVED CACHING for real-time updates"""
-    map_filtered_df = df.copy()
+    map_filtered_df = df
     
     # Convert tuple back to list for processing
     regional_hubs = list(regional_hubs_tuple) if isinstance(regional_hubs_tuple, tuple) else regional_hubs_tuple
@@ -521,7 +522,7 @@ def calculate_map_data(df, map_display_type, regional_hubs_tuple):
                 selected_countries.extend(hub_countries[hub])
         
         if selected_countries:
-            map_filtered_df = map_filtered_df[map_filtered_df['Country'].isin(selected_countries)]
+            map_filtered_df = df[df['Country'].isin(selected_countries)].copy()  # Copy only when filtering
 
     if map_display_type == "Publications":
         country_counts = map_filtered_df.groupby('Country')['Publications'].sum().reset_index()
@@ -825,8 +826,14 @@ selected_pub_type_raw = st.sidebar.pills(
 selected_pub_type = handle_all_selection(tuple(selected_pub_type_raw), tuple(filter_options['pub_types']))
 
 # Apply filters
-filtered_df = filter_data_by_selections(df, income_category, selected_income, selected_region, selected_pub_type, ['All'])
-
+filtered_df = filter_data_by_selections(
+    df, 
+    income_category, 
+    tuple(selected_income), 
+    tuple(selected_region), 
+    tuple(selected_pub_type), 
+    ['All']
+)
 # --- MAIN CONTENT ---
 
 if 'Country' not in filtered_df.columns:
