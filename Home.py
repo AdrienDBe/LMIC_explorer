@@ -163,7 +163,6 @@ button.st-emotion-cache-tx7mgd.e1mwqyj911:hover,
 .stPopover button:hover {
     background-color: #E8E8E8 !important;
     color: #262730 !important;
-    border: 1px solid #B0B0B0 !important;
 }
 
 
