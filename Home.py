@@ -945,8 +945,8 @@ def update_income_category():
         st.session_state.income_category_value = st.session_state.income_category_pills
 
 def update_income_level():
-    if not st.session_state.get('is_updating', False):
-        st.session_state.income_level_value = st.session_state.income_level_pills
+    # Disabled - causing rerun loop
+    pass
 
 def update_region():
     if not st.session_state.get('is_updating', False):
@@ -992,15 +992,25 @@ if 'Income Level' in df.columns:
     income_category = st.session_state.income_category_value
     
     if income_category == "LMIC" and filter_options['lmic_levels']:
-        st.sidebar.pills(
+        # Only update default if it doesn't exist or is invalid
+        if 'income_level_value' not in st.session_state or not st.session_state.income_level_value:
+            st.session_state.income_level_value = filter_options['lmic_levels']
+        
+        # Don't use callback - read value directly after widget renders
+        income_pills_result = st.sidebar.pills(
             "Narrow Income level:",
             filter_options['lmic_levels'],
             selection_mode="multi",
             default=st.session_state.income_level_value,
-            key="income_level_pills",
-            on_change=update_income_level
+            key="income_level_pills"
+            # NO on_change callback
         )
-        selected_income = st.session_state.income_level_value if st.session_state.income_level_value else filter_options['lmic_levels']
+        
+        # Update session state only if value actually changed
+        if income_pills_result != st.session_state.income_level_value:
+            st.session_state.income_level_value = income_pills_result
+        
+        selected_income = income_pills_result if income_pills_result else filter_options['lmic_levels']
     else:
         selected_income = [] if income_category == "LMIC" else ['All']
 else:
