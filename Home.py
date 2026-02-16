@@ -135,33 +135,34 @@ button:hover {
     color: #FFFFFF !important;
 }
 
-/* Unselected pill buttons - neutral/gray background */
-.stPills button[aria-pressed="false"] {
-    background-color: #F0F0F0 !important;
-    color: #262730 !important;
-    border: 1px solid #D3D3D3 !important;
-    font-weight: 500 !important;
+/* Base styling for all pill buttons */
+.stPills button {
     padding: 0.5rem 1rem !important;
     border-radius: 20px !important;
     transition: all 0.2s ease !important;
+    font-weight: 500 !important;
+}
+
+/* Unselected pill buttons - force gray background */
+.stPills button:not([aria-pressed="true"]) {
+    background-color: #F0F0F0 !important;
+    color: #262730 !important;
+    border: 1px solid #D3D3D3 !important;
 }
 
 /* Unselected pill button hover */
-.stPills button[aria-pressed="false"]:hover {
+.stPills button:not([aria-pressed="true"]):hover {
     background-color: #E8E8E8 !important;
     color: #262730 !important;
     border: 1px solid #B0B0B0 !important;
 }
 
-/* Selected pill buttons - #82C5E0 background, white text */
+/* Selected pill buttons ONLY */
 .stPills button[aria-pressed="true"] {
     background-color: #82C5E0 !important;
     color: #FFFFFF !important;
     border: 1px solid #82C5E0 !important;
     font-weight: 600 !important;
-    padding: 0.5rem 1rem !important;
-    border-radius: 20px !important;
-    transition: all 0.2s ease !important;
 }
 
 /* Selected pill button hover */
