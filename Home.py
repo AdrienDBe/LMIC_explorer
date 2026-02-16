@@ -143,35 +143,41 @@ button:hover {
     font-weight: 500 !important;
 }
 
-/* Unselected pill buttons - force gray background */
-.stPills button:not([aria-pressed="true"]) {
+/* Unselected pill buttons - gray background */
+.stPills button[kind="pills"] {
     background-color: #F0F0F0 !important;
     color: #262730 !important;
     border: 1px solid #D3D3D3 !important;
+    font-weight: 500 !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: 20px !important;
+    transition: all 0.2s ease !important;
 }
 
 /* Unselected pill button hover */
-.stPills button:not([aria-pressed="true"]):hover {
+.stPills button[kind="pills"]:hover {
     background-color: #E8E8E8 !important;
     color: #262730 !important;
     border: 1px solid #B0B0B0 !important;
 }
 
-/* Selected pill buttons ONLY */
-.stPills button[aria-pressed="true"] {
+/* Selected pill buttons - blue background */
+.stPills button[kind="pillsActive"] {
     background-color: #82C5E0 !important;
     color: #FFFFFF !important;
     border: 1px solid #82C5E0 !important;
     font-weight: 600 !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: 20px !important;
+    transition: all 0.2s ease !important;
 }
 
 /* Selected pill button hover */
-.stPills button[aria-pressed="true"]:hover {
+.stPills button[kind="pillsActive"]:hover {
     background-color: #6BADCC !important;
     color: #FFFFFF !important;
     border: 1px solid #6BADCC !important;
 }
-
 /* ==================== DATAFRAMES & TABLES ==================== */
 
 [data-testid="stDataFrame"],
