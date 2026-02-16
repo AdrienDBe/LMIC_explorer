@@ -99,43 +99,8 @@ h1, h2, h3, h4, h5, h6 {
     color: #262730 !important;
 }
 
-/* ==================== FORMS & INPUTS ==================== */
-
-input, textarea, select {
-    background-color: #FFFFFF !important;
-    color: #262730 !important;
-    border: 1px solid #D3D3D3 !important;
-}
-
-input::placeholder {
-    color: #999999 !important;
-}
-
-textarea::placeholder {
-    color: #999999 !important;
-}
-
-/* Focus states */
-input:focus, textarea:focus, select:focus {
-    background-color: #FFFFFF !important;
-    color: #262730 !important;
-    border: 2px solid #4682b4 !important;
-}
 
 /* ==================== BUTTONS ==================== */
-
-/* Generic buttons - but NOT pill buttons */
-button:not([kind="pills"]):not([kind="pillsActive"]), 
-[data-testid="baseButton-primary"] {
-    background-color: #a7d4fa !important;
-    color: #000000 !important;
-    border: none !important;
-}
-
-button:not([kind="pills"]):not([kind="pillsActive"]):hover {
-    background-color: #73b9f5 !important;
-    color: #FFFFFF !important;
-}
 
 /* Base styling for all pill buttons */
 .stPills button {
