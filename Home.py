@@ -102,26 +102,28 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ==================== BUTTONS ==================== */
 
-/* ==================== RADIO BUTTONS - EXACT FIX ==================== */
+/* ==================== RADIO BUTTONS - CORRECT STYLING ==================== */
 
-/* Radio button outer circle - unselected */
+/* Radio button outer circle - UNSELECTED (grey border) */
 div.st-ao.st-b0 {
     border-color: #D3D3D3 !important;
-    background-color: transparent !important;
+    border-width: 2px !important;
+    background-color: white !important;
 }
 
-/* Radio button outer circle - SELECTED (remove red) */
+/* Radio button outer circle - SELECTED (blue border) */
 div.st-ao.st-c2 {
     border-color: #82C5E0 !important;
-    background-color: transparent !important;
+    border-width: 2px !important;
+    background-color: white !important;
 }
 
-/* Radio button inner dot - unselected */
+/* Radio button inner dot - UNSELECTED (invisible/transparent) */
 div.st-bi.st-bj.st-bk {
     background-color: transparent !important;
 }
 
-/* Radio button inner dot - SELECTED (change from red to blue) */
+/* Radio button inner dot - SELECTED (blue dot) */
 div.st-c3.st-c4.st-c5 {
     background-color: #82C5E0 !important;
 }
@@ -131,12 +133,11 @@ label[data-baseweb="radio"]:hover div.st-ao {
     border-color: #82C5E0 !important;
 }
 
-/* Hide the actual radio input */
+/* Hide the actual radio input but keep functionality */
 input[type="radio"].st-bl {
     opacity: 0 !important;
     position: absolute !important;
 }
-
 /* ==================== PILL BUTTONS ==================== */
 
 /* Base styling for all pill buttons */
