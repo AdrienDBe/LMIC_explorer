@@ -146,34 +146,39 @@ button:not([kind="pills"]):not([kind="pillsActive"]):hover {
 }
 
 /* Unselected pill buttons - gray background */
-.stPills button[kind="pills"] {
+.stPills button[kind="pills"],
+button.st-emotion-cache-b0zc2i.e1mwqyj910 {
     background-color: #F0F0F0 !important;
     color: #262730 !important;
     border: 1px solid #D3D3D3 !important;
 }
 
 /* Unselected pill button hover */
-.stPills button[kind="pills"]:hover {
+.stPills button[kind="pills"]:hover,
+button.st-emotion-cache-b0zc2i.e1mwqyj910:hover {
     background-color: #E8E8E8 !important;
     color: #262730 !important;
     border: 1px solid #B0B0B0 !important;
 }
 
-/* Selected pill buttons - FORCE blue background with higher specificity */
-button[kind="pillsActive"][data-testid="stBaseButton-pillsActive"],
+/* Selected pill buttons - TARGET THE EXACT EMOTION CLASS */
+button.st-emotion-cache-tx7mgd.e1mwqyj911,
+button.st-emotion-cache-tx7mgd.e1mwqyj911[kind="pillsActive"],
 .stPills button[kind="pillsActive"] {
     background-color: #82C5E0 !important;
     color: #FFFFFF !important;
     border: 1px solid #82C5E0 !important;
+    border-color: #82C5E0 !important;
     font-weight: 600 !important;
 }
 
 /* Selected pill button hover */
-button[kind="pillsActive"][data-testid="stBaseButton-pillsActive"]:hover,
+button.st-emotion-cache-tx7mgd.e1mwqyj911:hover,
 .stPills button[kind="pillsActive"]:hover {
     background-color: #6BADCC !important;
     color: #FFFFFF !important;
     border: 1px solid #6BADCC !important;
+    border-color: #6BADCC !important;
 }
 /* ==================== DATAFRAMES & TABLES ==================== */
 
