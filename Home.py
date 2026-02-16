@@ -50,6 +50,31 @@ else:
     st.session_state.last_rerun_time = current_time
     st.session_state.first_run = False
 
+# ADD THIS NEW SECTION HERE:
+# Track what's causing reruns
+if 'rerun_causes' not in st.session_state:
+    st.session_state.rerun_causes = []
+    st.session_state.widget_states = {}
+
+# Capture current widget states
+current_widgets = {
+    'income_category': st.session_state.get('income_category_value', None),
+    'income_level': st.session_state.get('income_level_value', None),
+    'region': st.session_state.get('region_value', None),
+    'regional_hubs': st.session_state.get('regional_hubs_value', None),
+    'pub_type': st.session_state.get('pub_type_value', None),
+}
+
+# Detect changes
+if st.session_state.widget_states:
+    for key, value in current_widgets.items():
+        if st.session_state.widget_states.get(key) != value:
+            st.session_state.rerun_causes.append(f"Rerun {st.session_state.rerun_count}: {key} changed")
+            if len(st.session_state.rerun_causes) > 20:  # Keep only last 20
+                st.session_state.rerun_causes.pop(0)
+
+st.session_state.widget_states = current_widgets
+
 # Force aggressive cleanup every 3 reruns
 if st.session_state.rerun_count % 3 == 0:
     # Clear any cached DataFrames from session_state
@@ -98,27 +123,36 @@ st.set_page_config(
 # Right after st.set_page_config, add:
 
 # Debug panel (remove after fixing)
-with st.sidebar.expander("🐛 Debug Info", expanded=False):
+with st.sidebar.expander("🐛 Debug Info", expanded=True):  # Changed to expanded=True
     st.write(f"**Rerun count:** {st.session_state.rerun_count}")
     current_mem, peak_mem = get_memory_usage()
     st.write(f"**Memory:** {current_mem:.1f}MB / {peak_mem:.1f}MB")
     st.write(f"**Session state keys:** {len(st.session_state)}")
     
-    # NEW: Show which values changed
-    if 'prev_filter_sig' not in st.session_state:
-        st.session_state.prev_filter_sig = None
+    # NEW: Show recent rerun causes
+    if st.session_state.get('rerun_causes'):
+        st.write("**Recent rerun causes:**")
+        for cause in st.session_state.rerun_causes[-5:]:  # Last 5
+            st.caption(cause)
+    else:
+        st.write("**No rerun causes yet**")
     
+    # Show if filter changed
     if hasattr(st.session_state, 'filter_signature'):
-        if st.session_state.prev_filter_sig != st.session_state.filter_signature:
-            st.write("🔴 **Filter changed!**")
-            st.session_state.prev_filter_sig = st.session_state.filter_signature
+        filter_changed = st.session_state.get('filter_changed_flag', False)
+        if filter_changed:
+            st.write("🔴 **Filter changed this run**")
         else:
-            st.write("🟢 **No filter change**")
+            st.write("🟢 **Filter stable**")
     
     if st.button("Clear All Cache"):
         st.cache_data.clear()
         st.cache_resource.clear()
         gc.collect()
+        st.rerun()
+    
+    if st.button("Reset App"):
+        st.session_state.clear()
         st.rerun()
     
     if st.button("Clear Session State"):
@@ -877,6 +911,18 @@ def get_filter_options(df):
     return options
 
 filter_options = get_filter_options(df)
+
+# Circuit breaker: stop if too many reruns in short time
+if st.session_state.rerun_count > 10:
+    recent_causes = st.session_state.get('rerun_causes', [])[-5:]
+    
+    # If same widget is causing multiple reruns, it's a loop
+    if len(recent_causes) >= 3:
+        causes_text = [c.split(': ')[1] if ': ' in c else c for c in recent_causes]
+        if len(set(causes_text)) == 1:  # Same cause repeated
+            st.error(f"⚠️ Detected rerun loop from: {causes_text[0]}")
+            st.warning("Try refreshing the page (F5) to reset the app.")
+            st.stop()
 
 # --- SIDEBAR FILTERS ---
 
