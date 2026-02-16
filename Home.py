@@ -980,18 +980,11 @@ filter_changed = (st.session_state.filter_signature != new_filter_signature)
 if filter_changed:
     with st.spinner("Applying filters..."):
         filtered_df = filter_data_by_selections(df, income_category, selected_income, selected_region, selected_pub_type, ['All'])
-        # Don't store large dataframes - recalculate instead
         st.session_state.filter_signature = new_filter_signature
         log_memory("After filtering")
 else:
-    # Recalculate filtered_df (fast operation)
+    # Recalculate filtered_df (fast operation - don't store in session_state)
     filtered_df = filter_data_by_selections(df, income_category, selected_income, selected_region, selected_pub_type, ['All'])
-elif 'filtered_df' in st.session_state:
-    filtered_df = st.session_state.filtered_df
-else:
-    # First run
-    filtered_df = filter_data_by_selections(df, income_category, selected_income, selected_region, selected_pub_type, ['All'])
-    st.session_state.filtered_df = filtered_df
     
 # Create stable filter signature using sorted tuples
 filter_signature = (
