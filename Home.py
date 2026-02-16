@@ -32,19 +32,23 @@ def log_memory(label=""):
 if 'rerun_count' not in st.session_state:
     st.session_state.rerun_count = 0
     st.session_state.last_rerun_time = time.time()
+    st.session_state.first_run = True
 else:
     st.session_state.rerun_count += 1
     current_time = time.time()
     
-    # Check rerun frequency
-    time_since_last = current_time - st.session_state.last_rerun_time
-    st.session_state.last_rerun_time = current_time
+    # Check rerun frequency (skip check on second run)
+    if 'last_rerun_time' in st.session_state and not st.session_state.get('first_run', False):
+        time_since_last = current_time - st.session_state.last_rerun_time
+        
+        # If reruns are too frequent (less than 0.1 seconds apart), something is wrong
+        if time_since_last < 0.1 and st.session_state.rerun_count > 5:
+            st.error(f"⚠️ Detected rapid rerun loop ({time_since_last:.3f}s between reruns). Pausing...")
+            time.sleep(0.5)  # Force a pause
+            gc.collect()
     
-    # If reruns are too frequent (less than 0.1 seconds apart), something is wrong
-    if time_since_last < 0.1 and st.session_state.rerun_count > 5:
-        st.error(f"⚠️ Detected rapid rerun loop ({time_since_last:.3f}s between reruns). Pausing...")
-        time.sleep(0.5)  # Force a pause
-        gc.collect()
+    st.session_state.last_rerun_time = current_time
+    st.session_state.first_run = False
 
 # Force aggressive cleanup every 3 reruns
 if st.session_state.rerun_count % 3 == 0:
