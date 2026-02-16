@@ -31,8 +31,20 @@ def log_memory(label=""):
 # Monitor rerun count
 if 'rerun_count' not in st.session_state:
     st.session_state.rerun_count = 0
+    st.session_state.last_rerun_time = time.time()
 else:
     st.session_state.rerun_count += 1
+    current_time = time.time()
+    
+    # Check rerun frequency
+    time_since_last = current_time - st.session_state.last_rerun_time
+    st.session_state.last_rerun_time = current_time
+    
+    # If reruns are too frequent (less than 0.1 seconds apart), something is wrong
+    if time_since_last < 0.1 and st.session_state.rerun_count > 5:
+        st.error(f"⚠️ Detected rapid rerun loop ({time_since_last:.3f}s between reruns). Pausing...")
+        time.sleep(0.5)  # Force a pause
+        gc.collect()
 
 # Force aggressive cleanup every 3 reruns
 if st.session_state.rerun_count % 3 == 0:
@@ -88,6 +100,17 @@ with st.sidebar.expander("🐛 Debug Info", expanded=False):
     st.write(f"**Memory:** {current_mem:.1f}MB / {peak_mem:.1f}MB")
     st.write(f"**Session state keys:** {len(st.session_state)}")
     
+    # NEW: Show which values changed
+    if 'prev_filter_sig' not in st.session_state:
+        st.session_state.prev_filter_sig = None
+    
+    if hasattr(st.session_state, 'filter_signature'):
+        if st.session_state.prev_filter_sig != st.session_state.filter_signature:
+            st.write("🔴 **Filter changed!**")
+            st.session_state.prev_filter_sig = st.session_state.filter_signature
+        else:
+            st.write("🟢 **No filter change**")
+    
     if st.button("Clear All Cache"):
         st.cache_data.clear()
         st.cache_resource.clear()
@@ -99,6 +122,7 @@ with st.sidebar.expander("🐛 Debug Info", expanded=False):
         for key in keys_to_clear:
             del st.session_state[key]
         st.rerun()
+
 
 st.markdown("""
 <style>
@@ -739,27 +763,25 @@ def process_grouped_data(search_results, display_type):
         import traceback
         st.error(f"Traceback: {traceback.format_exc()}")
         return pd.DataFrame(), []
-
-# Helper function
+        
 def handle_all_selection(current_selection_tuple, all_options_tuple):
     """Handle 'All' selection logic"""
     current_selection = list(current_selection_tuple)
     all_options = list(all_options_tuple)
     
-    if not current_selection:
+    # If input is already correct, return immediately (prevent loops)
+    if current_selection == ['All'] or (not current_selection):
         return ['All']
     
     if 'All' in current_selection and len(current_selection) > 1:
         return [item for item in current_selection if item != 'All']
-    
-    if current_selection == ['All']:
-        return ['All']
     
     non_all_options = [opt for opt in all_options if opt != 'All']
     if len(current_selection) == len(non_all_options) and all(item in non_all_options for item in current_selection):
         return ['All']
     
     return current_selection
+
 
 def store_in_session_lightweight(key, data):
     """Store data in session state with memory limits"""
@@ -854,21 +876,39 @@ filter_options = get_filter_options(df)
 
 # --- SIDEBAR FILTERS ---
 
-# Callback functions to update session state WITHOUT triggering extra reruns
+# Prevent cascading updates
+if 'is_updating' not in st.session_state:
+    st.session_state.is_updating = False
+
+def safe_update(callback_func):
+    """Wrapper to prevent cascading callbacks"""
+    def wrapper():
+        if not st.session_state.is_updating:
+            st.session_state.is_updating = True
+            callback_func()
+            st.session_state.is_updating = False
+    return wrapper
+    
+# Callback functions with safe updates
 def update_income_category():
-    st.session_state.income_category_value = st.session_state.income_category_pills
+    if not st.session_state.get('is_updating', False):
+        st.session_state.income_category_value = st.session_state.income_category_pills
 
 def update_income_level():
-    st.session_state.income_level_value = st.session_state.income_level_pills
+    if not st.session_state.get('is_updating', False):
+        st.session_state.income_level_value = st.session_state.income_level_pills
 
 def update_region():
-    st.session_state.region_value = st.session_state.region_pills
+    if not st.session_state.get('is_updating', False):
+        st.session_state.region_value = st.session_state.region_pills
 
 def update_regional_hubs():
-    st.session_state.regional_hubs_value = st.session_state.regional_hubs_pills
+    if not st.session_state.get('is_updating', False):
+        st.session_state.regional_hubs_value = st.session_state.regional_hubs_pills
 
 def update_pub_type():
-    st.session_state.pub_type_value = st.session_state.pub_type_pills
+    if not st.session_state.get('is_updating', False):
+        st.session_state.pub_type_value = st.session_state.pub_type_pills
 
 # Initialize values in session_state ONCE
 if 'income_category_value' not in st.session_state:
