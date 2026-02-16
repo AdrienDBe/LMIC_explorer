@@ -1,0 +1,38 @@
+[theme]
+# Primary accent color for interactive elements.
+primaryColor = "#FF4B4B"
+
+# Background color for the main content area.
+backgroundColor = "#FFFFFF"
+
+# Background color used for the sidebar and most interactive widgets.
+secondaryBackgroundColor = "#F0F2F6"
+
+# Color used for almost all text.
+textColor = "#262730"
+
+# Font family for all text in the app, except code blocks.
+font = "sans serif"
+
+[server]
+# List of folders that should not trigger a rerun when changed.
+# folderWatchBlacklist = []
+
+# Change the type of file watcher used by Streamlit.
+# fileWatcherType = "auto"
+
+# Automatically rerun script when the script source file changes.
+runOnSave = true
+
+# The address where the server will listen for client and browser connections.
+headless = true
+
+[browser]
+# Internet address where users should point their browsers to connect to the app.
+# serverAddress = "localhost"
+
+# Default port where the server will listen for browser connections.
+# serverPort = 8501
+
+# Whether to send usage statistics to Streamlit.
+gatherUsageStats = false
