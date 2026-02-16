@@ -105,7 +105,7 @@ button:hover {
 /* Pill buttons */
 .stPills button {
     background-color: #E8E8E8 !important;
-    color: #262730 !important;
+    color: #FFFFFF !important;
     border: 1px solid #D3D3D3 !important;
 }
 
