@@ -125,8 +125,8 @@ input:focus, textarea:focus, select:focus {
 /* ==================== BUTTONS ==================== */
 
 button, [data-testid="baseButton-primary"] {
-    background-color: #4682b4 !important;
-    color: #FFFFFF !important;
+    background-color: #a7d4fa !important;
+    color: #000000 !important;
     border: none !important;
 }
 
