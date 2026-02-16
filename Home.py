@@ -218,8 +218,8 @@ else:
     
     with col_s2:
         if 'Organization' in filtered_df.columns:
-            orgs = sorted(filtered_df['Organization'].unique())[:100]
-            search_org = st.selectbox("Organization:", ['All'] + list(orgs), index=0)
+            orgs = sorted([str(x) for x in filtered_df['Organization'].dropna().unique()])[:100]
+            search_org = st.selectbox("Organization:", ['All'] + orgs, index=0)
         else:
             search_org = 'All'
     
