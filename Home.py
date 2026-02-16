@@ -131,7 +131,7 @@ button, [data-testid="baseButton-primary"] {
 }
 
 button:hover {
-    background-color: #356a99 !important;
+    background-color: #E8E8E8 !important;
     color: #FFFFFF !important;
 }
 
@@ -148,7 +148,7 @@ button:hover {
 
 /* Unselected pill button hover */
 .stPills button:hover:not([aria-pressed="true"]) {
-    background-color: #D3D3D3 !important;
+    background-color: #E8E8E8 !important;
     color: #262730 !important;
     border: 1px solid #B0B0B0 !important;
 }
