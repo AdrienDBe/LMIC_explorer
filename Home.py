@@ -135,10 +135,10 @@ button:hover {
     color: #FFFFFF !important;
 }
 
-/* Pill buttons */
-.stPills button {
-    background-color: #6BC7E4 !important;
-    color: #FFFFFF !important;
+/* Unselected pill buttons - neutral/gray background */
+.stPills button[aria-pressed="false"] {
+    background-color: #F0F0F0 !important;
+    color: #262730 !important;
     border: 1px solid #D3D3D3 !important;
     font-weight: 500 !important;
     padding: 0.5rem 1rem !important;
@@ -147,7 +147,7 @@ button:hover {
 }
 
 /* Unselected pill button hover */
-.stPills button:hover:not([aria-pressed="true"]) {
+.stPills button[aria-pressed="false"]:hover {
     background-color: #E8E8E8 !important;
     color: #262730 !important;
     border: 1px solid #B0B0B0 !important;
@@ -159,6 +159,9 @@ button:hover {
     color: #FFFFFF !important;
     border: 1px solid #82C5E0 !important;
     font-weight: 600 !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: 20px !important;
+    transition: all 0.2s ease !important;
 }
 
 /* Selected pill button hover */
@@ -166,13 +169,6 @@ button:hover {
     background-color: #6BADCC !important;
     color: #FFFFFF !important;
     border: 1px solid #6BADCC !important;
-}
-
-/* Alternative selector - ensure all selected states work */
-.stPills button:not([aria-pressed="false"]) {
-    background-color: #82C5E0 !important;
-    color: #FFFFFF !important;
-    border: 1px solid #82C5E0 !important;
 }
 
 /* ==================== DATAFRAMES & TABLES ==================== */
