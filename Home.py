@@ -1249,16 +1249,10 @@ else:
     # Calculate fresh each time
     # Cache search results in session_state
     # Cache search results in session_state
-    search_signature = f"{search_term}_{search_org}_{tuple(selected_countries_pills)}_{tuple(regional_hubs)}_{filter_signature}"
-    
-    if 'search_signature' not in st.session_state or st.session_state.search_signature != search_signature:
-        search_results = calculate_search_results(
-            filtered_df, search_term, search_org, selected_countries_pills, tuple(regional_hubs)
-        )
-        st.session_state.search_results = search_results
-        st.session_state.search_signature = search_signature
-    else:
-        search_results = st.session_state.search_results
+    # Recalculate directly - prevents memory buildup
+    search_results = calculate_search_results(
+        filtered_df, search_term, search_org, selected_countries_pills, tuple(regional_hubs)
+    )
     
     # Don't cache the groupby - do it fresh
     grouped_data, display_cols = process_grouped_data(search_results, display_type)
