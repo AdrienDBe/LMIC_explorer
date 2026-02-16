@@ -767,11 +767,41 @@ selected_pub_type = handle_all_selection(
 )
 st.session_state.selected_pub_type = selected_pub_type
 
-# === APPLY FILTERS ===
-filtered_df = filter_data_by_selections(
-    df, income_category, selected_income, selected_region, 
-    selected_pub_type, ['All']
+# === CREATE FILTER SIGNATURE TO PREVENT REDUNDANT CALCULATIONS ===
+current_filter_sig = (
+    tuple(sorted(selected_income)) if isinstance(selected_income, list) else selected_income,
+    tuple(sorted(selected_region)) if isinstance(selected_region, list) else selected_region,
+    tuple(sorted(regional_hubs)) if isinstance(regional_hubs, list) else regional_hubs,
+    tuple(sorted(selected_pub_type)) if isinstance(selected_pub_type, list) else selected_pub_type,
+    income_category
 )
+
+# Only recalculate if filter actually changed
+if 'last_filter_sig' not in st.session_state:
+    st.session_state.last_filter_sig = current_filter_sig
+    st.session_state.cached_filtered_df = None
+
+filter_changed = st.session_state.last_filter_sig != current_filter_sig
+
+if filter_changed:
+    st.session_state.last_filter_sig = current_filter_sig
+    # APPLY FILTERS ONLY WHEN CHANGED
+    filtered_df = filter_data_by_selections(
+        df, income_category, selected_income, selected_region, 
+        selected_pub_type, ['All']
+    )
+    st.session_state.cached_filtered_df = filtered_df
+    gc.collect()
+else:
+    # REUSE CACHED FILTERED DF IF NO CHANGES
+    if st.session_state.cached_filtered_df is not None:
+        filtered_df = st.session_state.cached_filtered_df
+    else:
+        filtered_df = filter_data_by_selections(
+            df, income_category, selected_income, selected_region, 
+            selected_pub_type, ['All']
+        )
+        st.session_state.cached_filtered_df = filtered_df
 
 log_memory("After filtering")
 
@@ -790,10 +820,30 @@ else:
             key="map_display_type_radio"
         )
     
-        # Calculate map data
-        country_counts, display_label, map_filtered_df = calculate_map_data(
-            filtered_df, map_display_type, regional_hubs
-        )
+        # Create signature for map calculations
+        map_sig = (map_display_type, tuple(sorted(regional_hubs)))
+        
+        if 'last_map_sig' not in st.session_state:
+            st.session_state.last_map_sig = map_sig
+            st.session_state.cached_map_data = None
+        
+        map_changed = st.session_state.last_map_sig != map_sig
+        
+        if map_changed:
+            st.session_state.last_map_sig = map_sig
+            country_counts, display_label, map_filtered_df = calculate_map_data(
+                filtered_df, map_display_type, regional_hubs
+            )
+            st.session_state.cached_map_data = (country_counts, display_label, map_filtered_df)
+            gc.collect()
+        else:
+            if st.session_state.cached_map_data is not None:
+                country_counts, display_label, map_filtered_df = st.session_state.cached_map_data
+            else:
+                country_counts, display_label, map_filtered_df = calculate_map_data(
+                    filtered_df, map_display_type, regional_hubs
+                )
+                st.session_state.cached_map_data = (country_counts, display_label, map_filtered_df)
             
         display_data = country_counts.copy()
         display_data['Log_Count'] = np.log10(display_data['Count'] + 1)
@@ -944,13 +994,40 @@ else:
         key="display_type_radio"
     )
 
-    # Calculate search results
-    search_results = calculate_search_results(
-        filtered_df, search_term, search_org, selected_countries_pills, regional_hubs
+    # Create signature for search calculations
+    search_sig = (
+        search_term, 
+        search_org, 
+        tuple(sorted(selected_countries_pills)) if isinstance(selected_countries_pills, list) else selected_countries_pills,
+        tuple(sorted(regional_hubs)) if isinstance(regional_hubs, list) else regional_hubs,
+        display_type
     )
     
-    # Process grouped data
-    grouped_data, display_cols = process_grouped_data(search_results, display_type)
+    if 'last_search_sig' not in st.session_state:
+        st.session_state.last_search_sig = search_sig
+        st.session_state.cached_search_results = None
+        st.session_state.cached_grouped_data = None
+    
+    search_changed = st.session_state.last_search_sig != search_sig
+    
+    if search_changed:
+        st.session_state.last_search_sig = search_sig
+        search_results = calculate_search_results(
+            filtered_df, search_term, search_org, selected_countries_pills, regional_hubs
+        )
+        grouped_data, display_cols = process_grouped_data(search_results, display_type)
+        st.session_state.cached_search_results = search_results
+        st.session_state.cached_grouped_data = (grouped_data, display_cols)
+        gc.collect()
+    else:
+        if st.session_state.cached_grouped_data is not None:
+            grouped_data, display_cols = st.session_state.cached_grouped_data
+        else:
+            search_results = calculate_search_results(
+                filtered_df, search_term, search_org, selected_countries_pills, regional_hubs
+            )
+            grouped_data, display_cols = process_grouped_data(search_results, display_type)
+            st.session_state.cached_grouped_data = (grouped_data, display_cols)
 
     with st.expander("View Detailed Table", expanded=False):
         if len(grouped_data) > 0:
