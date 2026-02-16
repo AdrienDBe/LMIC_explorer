@@ -16,11 +16,10 @@ import tracemalloc
 # Start memory tracking
 tracemalloc.start()
 
-# Add this function at the top
 def get_memory_usage():
     """Get current memory usage"""
     current, peak = tracemalloc.get_traced_memory()
-    return current / 1024**2, peak / 1024**2  # Convert to MB
+    return current / 1024**2, peak / 1024**2
 
 def log_memory(label=""):
     """Log memory usage"""
@@ -32,72 +31,16 @@ def log_memory(label=""):
 if 'rerun_count' not in st.session_state:
     st.session_state.rerun_count = 0
     st.session_state.last_rerun_time = time.time()
-    st.session_state.first_run = True
 else:
     st.session_state.rerun_count += 1
     current_time = time.time()
-    
-    # Check rerun frequency (skip check on second run)
-    if 'last_rerun_time' in st.session_state and not st.session_state.get('first_run', False):
+    if 'last_rerun_time' in st.session_state:
         time_since_last = current_time - st.session_state.last_rerun_time
-        
-        # If reruns are too frequent (less than 0.1 seconds apart), something is wrong
         if time_since_last < 0.1 and st.session_state.rerun_count > 5:
-            st.error(f"⚠️ Detected rapid rerun loop ({time_since_last:.3f}s between reruns). Pausing...")
-            time.sleep(0.5)  # Force a pause
+            st.error(f"⚠️ Detected rapid rerun loop. Pausing...")
+            time.sleep(0.5)
             gc.collect()
-    
     st.session_state.last_rerun_time = current_time
-    st.session_state.first_run = False
-
-# Track what's causing reruns
-if 'rerun_causes' not in st.session_state:
-    st.session_state.rerun_causes = []
-    st.session_state.widget_states = {}
-
-# Capture current widget states
-current_widgets = {
-    'income_category': st.session_state.get('income_category_value', None),
-    'income_level': st.session_state.get('income_level_value', None),
-    'region': st.session_state.get('region_value', None),
-    'regional_hubs': st.session_state.get('regional_hubs_value', None),
-    'pub_type': st.session_state.get('pub_type_value', None),
-}
-
-# Detect changes
-if st.session_state.widget_states:
-    for key, value in current_widgets.items():
-        if st.session_state.widget_states.get(key) != value:
-            st.session_state.rerun_causes.append(f"Rerun {st.session_state.rerun_count}: {key} changed")
-            if len(st.session_state.rerun_causes) > 20:  # Keep only last 20
-                st.session_state.rerun_causes.pop(0)
-
-st.session_state.widget_states = current_widgets
-
-# Force aggressive cleanup every 3 reruns
-if st.session_state.rerun_count % 3 == 0:
-    # Clear any cached DataFrames from session_state
-    keys_to_remove = []
-    for key in st.session_state.keys():
-        if key.endswith('_df') or key.endswith('_data'):
-            try:
-                if isinstance(st.session_state[key], pd.DataFrame):
-                    size_mb = st.session_state[key].memory_usage(deep=True).sum() / 1024**2
-                    if size_mb > 5:  # Remove DataFrames over 5MB
-                        keys_to_remove.append(key)
-            except:
-                pass
-    
-    for key in keys_to_remove:
-        del st.session_state[key]
-    
-    gc.collect()
-    log_memory(f"After cleanup (rerun {st.session_state.rerun_count})")
-
-# Force garbage collection every 5 reruns
-if st.session_state.rerun_count % 5 == 0:
-    gc.collect()
-    log_memory(f"After GC (rerun {st.session_state.rerun_count})")
 
 # Emergency stop if too many reruns
 if st.session_state.rerun_count > 50:
@@ -119,28 +62,11 @@ st.set_page_config(
     }
 )
 
-# Debug panel (remove after fixing)
+# Debug panel
 with st.sidebar.expander("🐛 Debug Info", expanded=False):
     st.write(f"**Rerun count:** {st.session_state.rerun_count}")
     current_mem, peak_mem = get_memory_usage()
     st.write(f"**Memory:** {current_mem:.1f}MB / {peak_mem:.1f}MB")
-    st.write(f"**Session state keys:** {len(st.session_state)}")
-    
-    # Show recent rerun causes
-    if st.session_state.get('rerun_causes'):
-        st.write("**Recent rerun causes:**")
-        for cause in st.session_state.rerun_causes[-5:]:  # Last 5
-            st.caption(cause)
-    else:
-        st.write("**No rerun causes yet**")
-    
-    # Show if filter changed
-    if hasattr(st.session_state, 'filter_signature'):
-        filter_changed = st.session_state.get('filter_changed_flag', False)
-        if filter_changed:
-            st.write("🔴 **Filter changed this run**")
-        else:
-            st.write("🟢 **Filter stable**")
     
     if st.button("Clear All Cache"):
         st.cache_data.clear()
@@ -151,19 +77,9 @@ with st.sidebar.expander("🐛 Debug Info", expanded=False):
     if st.button("Reset App"):
         st.session_state.clear()
         st.rerun()
-    
-    if st.button("Clear Session State"):
-        keys_to_clear = [k for k in st.session_state.keys() if k != 'rerun_count']
-        for key in keys_to_clear:
-            del st.session_state[key]
-        st.rerun()
-
 
 st.markdown("""
 <style>
-/* ==================== FORCE LIGHT MODE - COMPREHENSIVE ==================== */
-
-/* Root containers */
 html, body {
     background-color: #FFFFFF !important;
     color: #262730 !important;
@@ -181,7 +97,6 @@ html, body {
     background-color: #F0F2F6 !important;
 }
 
-/* Main content */
 div.stMain {
     background-color: #FFFFFF !important;
     padding: 1rem !important;
@@ -193,8 +108,6 @@ div.block-container {
     padding-bottom: 1rem !important;
 }
 
-/* ==================== FIX TOP CUTOFF ISSUE ==================== */
-
 [data-testid="stAppViewContainer"] {
     padding-top: 0 !important;
     margin-top: 0 !important;
@@ -204,26 +117,21 @@ div.block-container {
     margin-top: 0 !important;
 }
 
-/* Radio buttons and controls */
 [data-testid="stRadio"],
 [data-testid="stPills"] {
     margin-top: 0.5rem !important;
     padding-top: 0.5rem !important;
 }
 
-/* Header visibility */
 [data-testid="stHeader"] {
     visibility: visible !important;
     display: block !important;
     margin-bottom: 1rem !important;
 }
 
-/* Toolbar visibility */
 div[data-testid="stToolbar"] {
     visibility: visible !important;
 }
-
-/* ==================== TEXT & TYPOGRAPHY ==================== */
 
 p, span, label, div {
     color: #262730 !important;
@@ -237,44 +145,6 @@ h1, h2, h3, h4, h5, h6 {
     color: #262730 !important;
 }
 
-
-/* ==================== BUTTONS ==================== */
-
-/* ==================== RADIO BUTTONS - HIGHER SPECIFICITY ==================== */
-
-/* Radio button outer circle - UNSELECTED (grey border) */
-div.st-ao.st-b0.st-b1.st-b2.st-b3.st-b4.st-b5,
-label[data-baseweb="radio"] div.st-ao.st-b0 {
-    border: 2px solid #D3D3D3 !important;
-    background-color: white !important;
-}
-
-/* Radio button outer circle - SELECTED (blue border) */
-div.st-ao.st-c2.st-b1.st-b2.st-b3.st-b4,
-label[data-baseweb="radio"] div.st-ao.st-c2 {
-    border: 2px solid #82C5E0 !important;
-    background-color: white !important;
-}
-
-/* Radio button inner dot - UNSELECTED (transparent) */
-div.st-bi.st-bj.st-bk,
-label[data-baseweb="radio"] div.st-bi {
-    background-color: transparent !important;
-}
-
-/* Radio button inner dot - SELECTED (blue) */
-div.st-c3.st-c4.st-c5,
-label[data-baseweb="radio"] div.st-c3 {
-    background-color: #82C5E0 !important;
-}
-
-/* Radio label hover */
-label[data-baseweb="radio"]:hover div.st-ao {
-    border-color: #82C5E0 !important;
-}
-/* ==================== PILL BUTTONS ==================== */
-
-/* Base styling for all pill buttons */
 .stPills button {
     padding: 0.5rem 1rem !important;
     border-radius: 20px !important;
@@ -282,7 +152,6 @@ label[data-baseweb="radio"]:hover div.st-ao {
     font-weight: 500 !important;
 }
 
-/* Unselected pill buttons - gray background */
 .stPills button[kind="pills"],
 button.st-emotion-cache-b0zc2i.e1mwqyj910 {
     background-color: #F0F0F0 !important;
@@ -290,7 +159,6 @@ button.st-emotion-cache-b0zc2i.e1mwqyj910 {
     border: 1px solid #D3D3D3 !important;
 }
 
-/* Unselected pill button hover */
 .stPills button[kind="pills"]:hover,
 button.st-emotion-cache-b0zc2i.e1mwqyj910:hover {
     background-color: #E8E8E8 !important;
@@ -298,7 +166,6 @@ button.st-emotion-cache-b0zc2i.e1mwqyj910:hover {
     border: 1px solid #B0B0B0 !important;
 }
 
-/* Selected pill buttons - blue background with MAXIMUM specificity */
 button.st-emotion-cache-tx7mgd.e1mwqyj911,
 button.st-emotion-cache-tx7mgd.e1mwqyj911[kind="pillsActive"],
 .stPills button[kind="pillsActive"],
@@ -306,25 +173,16 @@ button[kind="pillsActive"][data-testid="stBaseButton-pillsActive"] {
     background-color: #82C5E0 !important;
     color: #FFFFFF !important;
     border: 1px solid #82C5E0 !important;
-    border-color: #82C5E0 !important;
     font-weight: 600 !important;
 }
 
-/* Selected pill button hover */
 button.st-emotion-cache-tx7mgd.e1mwqyj911:hover,
 .stPills button[kind="pillsActive"]:hover,
 button[kind="pillsActive"][data-testid="stBaseButton-pillsActive"]:hover {
     background-color: #6BADCC !important;
     color: #FFFFFF !important;
     border: 1px solid #6BADCC !important;
-    border-color: #6BADCC !important;
 }
-
-/* ==================== POPOVER BUTTONS ==================== */
-
-/* Popover button - match unselected pill */
-
-/* ==================== EXPANDERS & CONTAINERS ==================== */
 
 [data-testid="stExpander"] {
     background-color: #FFFFFF !important;
@@ -339,23 +197,15 @@ button[kind="pillsActive"][data-testid="stBaseButton-pillsActive"]:hover {
     color: #262730 !important;
 }
 
-
-/* ==================== RADIO & CHECKBOX ==================== */
-
 [data-testid="stRadio"] label,
 [data-testid="stCheckbox"] label {
     color: #262730 !important;
 }
 
-
-/* ==================== POPOVER ==================== */
-
 [data-testid="stPopover"] {
     background-color: #FFFFFF !important;
     border: 1px solid #D3D3D3 !important;
 }
-
-/* ==================== PLOTLY CHARTS ==================== */
 
 .plotly {
     background-color: #FFFFFF !important;
@@ -369,56 +219,12 @@ button[kind="pillsActive"][data-testid="stBaseButton-pillsActive"]:hover {
     display: none !important;
 }
 
-/* ==================== SIDEBAR SPECIFIC ==================== */
-
-.sidebar-content {
-    background-color: #F0F2F6 !important;
-    color: #262730 !important;
-}
-
-/* Remove any dark overlays */
-div[role="region"] {
-    background-color: transparent !important;
-}
-
-
-
-/* ==================== REMOVE DARK MODE ARTIFACTS ==================== */
-
-[data-testid="stAppViewContainer"].dark {
-    background-color: #FFFFFF !important;
-}
-
-/* Force all text to be dark */
-* {
-    color: #262730 !important;
-}
-
-/* Except for white text that should stay white */
-button, [data-testid="baseButton-primary"] {
-    color: #FFFFFF !important;
-}
-
-/* ==================== RESPONSIVE FIXES ==================== */
-
-@media (prefers-color-scheme: dark) {
-    html, body, [data-testid="stAppViewContainer"] {
-        background-color: #FFFFFF !important;
-        color: #262730 !important;
-    }
-}
-
 </style>
 """, unsafe_allow_html=True)
 
 st.sidebar.markdown("")
 
-
-if 'sidebar_expanded' not in st.session_state:
-    st.session_state.sidebar_expanded = True
-
-
-# --- OPTIMIZED CACHING FUNCTIONS ---
+# --- CACHING FUNCTIONS ---
 
 @st.cache_data(ttl=3600)
 def load_world_bank_metadata():
@@ -472,13 +278,11 @@ def get_country_name_mapping():
 def optimize_dataframe_memory(df):
     """Optimize DataFrame memory usage"""
     optimized_df = df.copy()
-    
     for col in optimized_df.columns:
         if optimized_df[col].dtype == 'object':
             unique_ratio = len(optimized_df[col].unique()) / len(optimized_df)
             if unique_ratio < 0.5:
                 optimized_df[col] = optimized_df[col].astype('category')
-    
     return optimized_df
 
 @st.cache_data
@@ -495,7 +299,6 @@ def load_and_preprocess_data(filepath):
         
         df = pd.read_csv(filepath, low_memory=False, dtype=dtype_dict)
         
-        # CRITICAL: Remove duplicates early
         initial_rows = len(df)
         df = df.drop_duplicates(subset=['Name', 'Organization', 'Country', 'Publications'])
         df = df[df['Country'] != '']
@@ -523,7 +326,6 @@ def load_and_preprocess_data(filepath):
                 'incomeLevel': 'Income Level'
             })
             df['Income Level'] = df['Income Level'].replace('Not classified', 'Low income')
-            
             if 'name' in df.columns:
                 df = df.drop('name', axis=1)
         
@@ -542,7 +344,6 @@ def load_and_preprocess_data(filepath):
             df['Country'] = df['Country'].replace('', 'Unknown')
         
         df = optimize_dataframe_memory(df)
-        
         return df, country_name_mapping
         
     except Exception as e:
@@ -580,7 +381,6 @@ def get_country_coordinates():
         "Viet Nam": {"lat": 14.0583, "lon": 108.2772},
         "Thailand": {"lat": 15.8700, "lon": 100.9925},
         "Malaysia": {"lat": 4.2105, "lon": 101.9758},
-        
         "Algeria": {"lat": 28.0339, "lon": 1.6596},
         "Argentina": {"lat": -38.4161, "lon": -63.6167},
         "Brazil": {"lat": -14.2350, "lon": -51.9253},
@@ -608,12 +408,10 @@ def get_country_coordinates():
         "Senegal": {"lat": 14.4974, "lon": -14.4524},
         "Tunisia": {"lat": 33.8869, "lon": 9.5375},
         "Uruguay": {"lat": -32.5228, "lon": -55.7658},
-        
         "Kenya": {"lat": -0.0236, "lon": 37.9062},
         "Uganda": {"lat": 1.3733, "lon": 32.2903},
         "Tanzania": {"lat": -6.3690, "lon": 34.8888},
         "Ethiopia": {"lat": 9.1450, "lon": 40.4897},
-        
         "South Africa": {"lat": -30.5595, "lon": 22.9375},
         "Botswana": {"lat": -22.3285, "lon": 24.6849},
         "Eswatini": {"lat": -26.5225, "lon": 31.4659},
@@ -648,7 +446,6 @@ def calculate_map_data(df, map_display_type, regional_hubs_tuple):
     """Calculate country counts for map display"""
     map_filtered_df = df.copy()
     
-    # Convert tuple back to list for processing
     regional_hubs = list(regional_hubs_tuple) if isinstance(regional_hubs_tuple, tuple) else regional_hubs_tuple
     
     if "All" not in regional_hubs and regional_hubs:
@@ -685,7 +482,6 @@ def calculate_search_results(df, search_term, search_org, selected_countries_pil
     """Calculate search results"""
     search_results = df.copy()
     
-    # Convert tuple back to list for processing
     regional_hubs = list(regional_hubs_tuple) if isinstance(regional_hubs_tuple, tuple) else regional_hubs_tuple
     
     if "All" not in regional_hubs and regional_hubs:
@@ -714,25 +510,20 @@ def calculate_search_results(df, search_term, search_org, selected_countries_pil
     
 def process_grouped_data(search_results, display_type):
     """Process grouped data"""
-    
     try:
-        # Make a clean copy
         df = search_results.copy()
         
-        # Check required columns exist
         required_cols = ['Name', 'Organization', 'Country', 'Publications', 'Citations']
         missing_cols = [col for col in required_cols if col not in df.columns]
         if missing_cols:
             st.error(f"Missing required columns: {missing_cols}")
             return pd.DataFrame(), []
         
-        # CRITICAL FIX: Convert category columns back to strings to avoid groupby issues
         for col in ['Name', 'Organization', 'Country']:
             if col in df.columns:
                 if df[col].dtype.name == 'category':
                     df[col] = df[col].astype(str)
         
-        # Clean data step by step
         df = df[df['Name'].notna()]
         df = df[df['Organization'].notna()]
         df = df[df['Country'].notna()]
@@ -740,11 +531,9 @@ def process_grouped_data(search_results, display_type):
         df = df[df['Organization'] != 'Unknown']
         df = df[df['Country'] != 'Unknown']
         
-        # Convert numeric columns
         df['Publications'] = pd.to_numeric(df['Publications'], errors='coerce').fillna(0)
         df['Citations'] = pd.to_numeric(df['Citations'], errors='coerce').fillna(0)
         
-        # Remove any rows with 0 publications
         df = df[df['Publications'] > 0]
         
         if len(df) == 0:
@@ -759,14 +548,13 @@ def process_grouped_data(search_results, display_type):
                 'Citations': 'sum'
             })
             
-            # Calculate Citations Mean
             grouped_data['Citations Mean'] = (
                 grouped_data['Citations'] / grouped_data['Publications']
             ).round(2)
             
             display_cols = ['Name', 'Organization', 'Country', 'Publications', 'Citations', 'Citations Mean']
             
-        else:  # Organizations
+        else:
             grouped_data = df.groupby(
                 ['Organization', 'Country'],
                 as_index=False
@@ -776,29 +564,22 @@ def process_grouped_data(search_results, display_type):
                 'Name': 'nunique'
             })
             
-            # Rename using rename method
             grouped_data = grouped_data.rename(columns={'Name': 'Authors'})
             
-            # Calculate Citations Mean
             grouped_data['Citations Mean'] = (
                 grouped_data['Citations'] / grouped_data['Publications']
             ).round(2)
             
             display_cols = ['Organization', 'Country', 'Authors', 'Publications', 'Citations', 'Citations Mean']
 
-        # Sort and clean
         grouped_data = grouped_data.sort_values('Publications', ascending=False)
         grouped_data = grouped_data.reset_index(drop=True)
-        
-        # Fill any NaN values with 0
         grouped_data = grouped_data.fillna(0)
 
         return grouped_data, display_cols
         
     except Exception as e:
         st.error(f"Error in process_grouped_data: {str(e)}")
-        import traceback
-        st.error(f"Traceback: {traceback.format_exc()}")
         return pd.DataFrame(), []
         
 def handle_all_selection(current_selection_tuple, all_options_tuple):
@@ -806,7 +587,6 @@ def handle_all_selection(current_selection_tuple, all_options_tuple):
     current_selection = list(current_selection_tuple)
     all_options = list(all_options_tuple)
     
-    # If input is already correct, return immediately (prevent loops)
     if current_selection == ['All'] or (not current_selection):
         return ['All']
     
@@ -819,22 +599,7 @@ def handle_all_selection(current_selection_tuple, all_options_tuple):
     
     return current_selection
 
-
-def store_in_session_lightweight(key, data):
-    """Store data in session state with memory limits"""
-    if isinstance(data, pd.DataFrame):
-        # Only store if under 10MB
-        size_mb = data.memory_usage(deep=True).sum() / 1024**2
-        if size_mb < 10:
-            st.session_state[key] = data
-        else:
-            st.warning(f"⚠️ Not caching {key} - too large ({size_mb:.1f}MB)")
-            return data
-    else:
-        st.session_state[key] = data
-    return data
-
-# --- MAIN APP LOGIC ---
+# --- INITIALIZE APP ---
 
 @st.cache_resource
 def initialize_app():
@@ -852,7 +617,7 @@ def initialize_app():
             df, country_name_mapping = load_and_preprocess_data(default_path)
             data_path = default_path
         else:
-            st.error(f"❌ File not found. Please ensure the data file exists at {default_path}")
+            st.error(f"❌ File not found at {default_path}")
             st.stop()
     except Exception as e:
         st.error(f"❌ Error loading data: {str(e)}")
@@ -876,10 +641,9 @@ def initialize_app():
 
 df, country_name_mapping, data_path = initialize_app()
 
-
 @st.cache_data
 def get_filter_options(df):
-    """Get all filter options in one go"""
+    """Get all filter options"""
     options = {}
     
     if 'Region' in df.columns:
@@ -908,83 +672,73 @@ def get_filter_options(df):
 
 filter_options = get_filter_options(df)
 
-# Circuit breaker: stop if too many reruns in short time
-if st.session_state.rerun_count > 10:
-    recent_causes = st.session_state.get('rerun_causes', [])[-5:]
-    
-    # If same widget is causing multiple reruns, it's a loop
-    if len(recent_causes) >= 3:
-        causes_text = [c.split(': ')[1] if ': ' in c else c for c in recent_causes]
-        if len(set(causes_text)) == 1:  # Same cause repeated
-            st.error(f"⚠️ Detected rerun loop from: {causes_text[0]}")
-            st.warning("Try refreshing the page (F5) to reset the app.")
-            st.stop()
+# === INITIALIZE FILTER STATE IN SESSION ===
+if 'income_category' not in st.session_state:
+    st.session_state.income_category = "All regions"
 
-# --- SIDEBAR FILTERS ---
+if 'selected_income' not in st.session_state:
+    st.session_state.selected_income = ['All']
 
-if 'Income Level' in df.columns:
-    income_category = st.sidebar.pills(
-        "Filter by Income Category:",
-        ["All regions", "LMIC"],
-        selection_mode="single",
-        key="income_category_pills"
-    )
-    
-    if income_category == "LMIC" and filter_options['lmic_levels']:
-        # Store the result, use it as default next time
-        if 'last_income_selection' not in st.session_state:
-            st.session_state.last_income_selection = filter_options['lmic_levels']
-        
-        income_pills_raw = st.sidebar.pills(
-            "Narrow Income level:",
-            filter_options['lmic_levels'],
-            selection_mode="multi",
-            default=st.session_state.last_income_selection,
-            key="income_level_pills"
-        )
-        
-        # Only update if not empty
-        if income_pills_raw:
-            st.session_state.last_income_selection = income_pills_raw
-            selected_income = income_pills_raw
-        else:
-            selected_income = filter_options['lmic_levels']
-    else:
-        selected_income = [] if income_category == "LMIC" else ['All']
-else:
-    income_category = "All regions"
-    selected_income = ['All']
-
-with st.sidebar:
-    st.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
-
-# Initialize once at start
 if 'selected_region' not in st.session_state:
     st.session_state.selected_region = ['All']
 
-# Get the widget value
+if 'regional_hubs' not in st.session_state:
+    st.session_state.regional_hubs = ['All']
+
+if 'selected_pub_type' not in st.session_state:
+    st.session_state.selected_pub_type = ['All']
+
+# --- SIDEBAR FILTERS ---
+
+st.sidebar.markdown("### Filters")
+
+# Income Category
+income_category = st.sidebar.pills(
+    "Filter by Income Category:",
+    ["All regions", "LMIC"],
+    selection_mode="single",
+    key="income_category_input"
+)
+st.session_state.income_category = income_category
+
+# Income Level (if LMIC selected)
+if income_category == "LMIC" and filter_options['lmic_levels']:
+    selected_income = st.sidebar.pills(
+        "Narrow Income level:",
+        filter_options['lmic_levels'],
+        selection_mode="multi",
+        key="income_level_input"
+    )
+    if not selected_income:
+        selected_income = filter_options['lmic_levels']
+    st.session_state.selected_income = selected_income
+else:
+    selected_income = ['All']
+    st.session_state.selected_income = selected_income
+
+st.sidebar.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
+
+# Region
 selected_region_raw = st.sidebar.pills(
     "Filter by Region:",
     filter_options['regions'],
     selection_mode="multi",
-    key="region_input"  # Stable key
+    key="region_input"
 )
-
-# Process it
-selected_region = handle_all_selection(...)
-
-# Store it back (prevents state thrashing)
+selected_region = handle_all_selection(
+    tuple(selected_region_raw) if selected_region_raw else ('All',),
+    tuple(filter_options['regions'])
+)
 st.session_state.selected_region = selected_region
 
-with st.sidebar:
-    st.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
+st.sidebar.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
 
+# Regional Hubs
 regional_hubs_raw = st.sidebar.pills(
     "Regional Excellence Hub:",
     options=["All", "A*STAR SIgN", "Institut Pasteur Network", "KEMRI-Wellcome", "AHRI"],
     selection_mode="multi",
-    default=["All"],
-    key="regional_hubs_pills"
+    key="regional_hubs_input"
 )
 
 if "All" in regional_hubs_raw and len(regional_hubs_raw) > 1:
@@ -994,34 +748,24 @@ elif not regional_hubs_raw:
 else:
     regional_hubs = regional_hubs_raw
 
-with st.sidebar:
-    st.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
+st.session_state.regional_hubs = regional_hubs
 
+st.sidebar.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
+
+# Publication Type
 selected_pub_type_raw = st.sidebar.pills(
     "Publication Type:",
     filter_options['pub_types'],
     selection_mode="multi",
-    default=['All'],
-    key="pub_type_pills"
+    key="pub_type_input"
 )
-selected_pub_type = handle_all_selection(tuple(selected_pub_type_raw), tuple(filter_options['pub_types']))
-
-# === FIXED: Single filter signature check (removed duplicate code) ===
-new_filter_signature = (
-    income_category,
-    tuple(sorted(selected_income)) if isinstance(selected_income, list) else selected_income,
-    tuple(sorted(selected_region)) if isinstance(selected_region, list) else selected_region,
-    tuple(sorted(selected_pub_type)) if isinstance(selected_pub_type, list) else selected_pub_type
+selected_pub_type = handle_all_selection(
+    tuple(selected_pub_type_raw) if selected_pub_type_raw else ('All',),
+    tuple(filter_options['pub_types'])
 )
+st.session_state.selected_pub_type = selected_pub_type
 
-# Only update if filter actually changed
-if 'filter_signature' not in st.session_state:
-    st.session_state.filter_signature = new_filter_signature
-
-if st.session_state.filter_signature != new_filter_signature:
-    st.session_state.filter_signature = new_filter_signature
-
-# Always apply filter (it's fast)
+# === APPLY FILTERS ===
 filtered_df = filter_data_by_selections(
     df, income_category, selected_income, selected_region, 
     selected_pub_type, ['All']
@@ -1037,10 +781,10 @@ else:
     col_map1, col_map2 = st.columns([1, 3])
 
     with col_map1:
-        map_display_type = st.radio("",
+        map_display_type = st.radio(
+            "Display Type:",
             options=["Publications", "Authors", "Organizations"],
             index=1,
-            horizontal=True,
             key="map_display_type_radio"
         )
     
@@ -1049,66 +793,17 @@ else:
             filtered_df, map_display_type, tuple(regional_hubs)
         )
             
-        hide_top_countries = "Show all countries"
-        num_to_hide = 0
-
-        if hide_top_countries == "Hide top countries" and len(country_counts) > num_to_hide:
-            display_data = country_counts.iloc[num_to_hide:].copy()
-        else:
-            display_data = country_counts.copy()
-
+        display_data = country_counts.copy()
         display_data['Log_Count'] = np.log10(display_data['Count'] + 1)
 
         st.markdown(f"Top 5 Countries (per {display_label}):")
-        table_placeholder = st.empty()
-        table_placeholder.dataframe(
-            display_data.head(5)[['Country', 'Count']],
-            hide_index=True,
-            height=200
-        )
-
-        with st.popover("🔧 Display Options"):
-            hide_top_countries = st.radio(
-                "Display options:",
-                options=["Show all countries", "Hide top countries"],
-                index=0,
-                horizontal=True,
-                key="hide_option"
-            )
-
-            if hide_top_countries == "Hide top countries":
-                max_countries_to_hide = min(10, len(country_counts) - 1)
-                num_to_hide = st.number_input(
-                    "Countries to hide:",
-                    min_value=1,
-                    max_value=max_countries_to_hide,
-                    value=1,
-                    step=1,
-                    key="num_hide"
-                )
-            else:
-                num_to_hide = 0
-
-        if hide_top_countries == "Hide top countries" and len(country_counts) > num_to_hide:
-            display_data = country_counts.iloc[num_to_hide:].copy()
-            hidden_countries = country_counts.head(num_to_hide)
-            st.caption(
-                f"Hiding top {num_to_hide} countries: "
-                f"{', '.join(hidden_countries['Country'].tolist())}"
-            )
-        else:
-            display_data = country_counts.copy()
-
-        display_data['Log_Count'] = np.log10(display_data['Count'] + 1)
-
-        table_placeholder.dataframe(
+        st.dataframe(
             display_data.head(5)[['Country', 'Count']],
             hide_index=True,
             height=200
         )
 
     with col_map2:
-        # Only use display_data (which may have top countries hidden)
         fig_heatmap = px.choropleth(
             display_data,
             locations='Country',
@@ -1133,19 +828,13 @@ else:
             "AHRI": "#4c956c"
         }
         
-        # Only use display_data (after hiding top countries if applicable)
         countries_with_data = set(display_data['Country'].tolist())
         
-        hubs_to_show = []
-        if "All" in regional_hubs:
-            hubs_to_show = list(hub_countries.keys())
-        else:
-            hubs_to_show = regional_hubs
+        hubs_to_show = list(hub_countries.keys()) if "All" in regional_hubs else regional_hubs
         
         for hub_name in hubs_to_show:
             if hub_name in hub_countries and hub_name in hub_colors:
                 covered_countries = hub_countries[hub_name]
-                # Only show markers for countries that have data in display_data
                 countries_to_mark = [country for country in covered_countries 
                                    if country in countries_with_data and country in country_coords]
                 
@@ -1174,7 +863,6 @@ else:
                         )
                     )
         
-        # Update map to fit only to countries with data
         fig_heatmap.update_geos(
             showframe=False,
             showcoastlines=True,
@@ -1213,8 +901,8 @@ else:
         
     st.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
 
-    # Second section with search and display
-    search_col1, search_col2, search_col3 = st.columns(3)
+    # Search and display section
+    search_col1, search_col2 = st.columns(2)
 
     with search_col1:
         search_term = st.text_input("Search by name or organization:", placeholder="Enter search term...")
@@ -1241,15 +929,16 @@ else:
                     "Filter by Countries:",
                     options=["All"] + available_countries_for_pills,
                     selection_mode="multi",
-                    default=["All"]
+                    default=["All"],
+                    key="countries_pills_input"
                 )
         else:
             selected_countries_pills = st.pills(
-                "",
+                "Filter by Countries:",
                 options=["All"] + available_countries_for_pills,
                 selection_mode="multi",
-                label_visibility="collapsed",
-                default=["All"]
+                default=["All"],
+                key="countries_pills_input"
             )
         
         if "All" in selected_countries_pills and len(selected_countries_pills) > 1:
@@ -1258,11 +947,10 @@ else:
             selected_countries_pills = ["All"]
 
     display_type = col1_table.radio(
-        "",
+        "Display Type:",
         options=["Organizations","Authors"],
         index=0,
-        horizontal=True, 
-        label_visibility="collapsed"
+        key="display_type_radio"
     )
 
     # Calculate search results
@@ -1275,20 +963,18 @@ else:
 
     with st.expander("View Detailed Table", expanded=False):
         if len(grouped_data) > 0:
-            # CORRECT COUNT - from grouped_data
             result_count = len(grouped_data)
-            col1_table.write(f"Found {result_count} {display_type.lower()} matching your criteria")
+            st.write(f"Found {result_count} {display_type.lower()} matching your criteria")
             
             display_results = grouped_data.copy()
             
-            # Add Search column for both Authors and Organizations
             if display_type == "Authors":
                 display_results['Search'] = display_results.apply(
                     lambda row: f"https://www.google.com/search?q={row['Name'].replace(' ', '+')}+{row['Organization'].replace(' ', '+')}",
                     axis=1
                 )
                 available_display_cols = [col for col in display_cols + ['Search'] if col in display_results.columns]
-            else:  # Organizations
+            else:
                 display_results['Search'] = display_results.apply(
                     lambda row: f"https://www.google.com/search?q={row['Organization'].replace(' ', '+')}+{row['Country'].replace(' ', '+')}",
                     axis=1
@@ -1297,7 +983,6 @@ else:
             
             dynamic_height = min(max(len(display_results) * 35 + 50, 200), 800)
             
-            # Use data_editor for both to show the clickable link
             st.data_editor(
                 display_results[available_display_cols],
                 hide_index=True,
@@ -1314,7 +999,7 @@ else:
         else:
             st.write(f"No {display_type.lower()} match your search criteria")
 
-    with st.expander("Visualize Publications and Citations Mean by Organization", expanded=False):
+    with st.expander("Visualize Publications and Citations Mean", expanded=False):
         if len(grouped_data) > 0:
             if display_type == "Organizations":
                 plot_data = grouped_data.copy()
@@ -1353,7 +1038,7 @@ else:
                         'Citations Mean': ':.2f'
                     },
                     size_max=30,
-                    title=f'Top 50 Authors: Publications (dot size) vs Citations Mean',
+                    title=f'Authors: Publications (dot size) vs Citations Mean',
                 )
             
             fig_scatter.update_layout(
