@@ -971,19 +971,21 @@ new_filter_signature = (
     tuple(sorted(selected_pub_type)) if isinstance(selected_pub_type, list) else selected_pub_type
 )
 
-# CRITICAL: Only update if it ACTUALLY changed
+# CRITICAL: Only log when filter actually changes
+filter_changed = False
 if 'filter_signature' not in st.session_state:
     st.session_state.filter_signature = new_filter_signature
-    
-filter_changed = (st.session_state.filter_signature != new_filter_signature)
+    filter_changed = True
+elif st.session_state.filter_signature != new_filter_signature:
+    st.session_state.filter_signature = new_filter_signature
+    filter_changed = True
 
+# Always recalculate (fast operation - don't cache DataFrames)
 if filter_changed:
     with st.spinner("Applying filters..."):
         filtered_df = filter_data_by_selections(df, income_category, selected_income, selected_region, selected_pub_type, ['All'])
-        st.session_state.filter_signature = new_filter_signature
         log_memory("After filtering")
 else:
-    # Recalculate filtered_df (fast operation - don't store in session_state)
     filtered_df = filter_data_by_selections(df, income_category, selected_income, selected_region, selected_pub_type, ['All'])
     
 # Create stable filter signature using sorted tuples
