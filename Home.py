@@ -1119,6 +1119,8 @@ else:
         )
         
         st.plotly_chart(fig_heatmap, use_container_width=True)
+        gc.collect()  # Clean up after plotly
+
         
     st.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
 
@@ -1291,4 +1293,5 @@ else:
             )
             
             st.plotly_chart(fig_scatter, use_container_width=True)
+            gc.collect()  # Clean up after plotly
             st.caption(f"💡 Dot size represents number of publications. Hover over dots for detailed information.")
