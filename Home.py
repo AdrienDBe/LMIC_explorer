@@ -9,6 +9,44 @@ import os
 import requests
 from functools import lru_cache
 import time
+import gc
+import sys
+import tracemalloc
+
+# Start memory tracking
+tracemalloc.start()
+
+# Add this function at the top
+def get_memory_usage():
+    """Get current memory usage"""
+    current, peak = tracemalloc.get_traced_memory()
+    return current / 1024**2, peak / 1024**2  # Convert to MB
+
+def log_memory(label=""):
+    """Log memory usage"""
+    current, peak = get_memory_usage()
+    print(f"[MEMORY {label}] Current: {current:.1f}MB, Peak: {peak:.1f}MB")
+    return current, peak
+
+# Monitor rerun count
+if 'rerun_count' not in st.session_state:
+    st.session_state.rerun_count = 0
+else:
+    st.session_state.rerun_count += 1
+
+# Force garbage collection every 5 reruns
+if st.session_state.rerun_count % 5 == 0:
+    gc.collect()
+    log_memory(f"After GC (rerun {st.session_state.rerun_count})")
+
+# Emergency stop if too many reruns
+if st.session_state.rerun_count > 50:
+    st.error("⚠️ Too many page reloads detected. Clearing cache...")
+    st.cache_data.clear()
+    st.cache_resource.clear()
+    st.session_state.clear()
+    st.session_state.rerun_count = 0
+    st.stop()
 
 st.set_page_config(
     page_title="LMIC Explorer",
@@ -20,6 +58,27 @@ st.set_page_config(
         'About': None
     }
 )
+
+# Right after st.set_page_config, add:
+
+# Debug panel (remove after fixing)
+with st.sidebar.expander("🐛 Debug Info", expanded=False):
+    st.write(f"**Rerun count:** {st.session_state.rerun_count}")
+    current_mem, peak_mem = get_memory_usage()
+    st.write(f"**Memory:** {current_mem:.1f}MB / {peak_mem:.1f}MB")
+    st.write(f"**Session state keys:** {len(st.session_state)}")
+    
+    if st.button("Clear All Cache"):
+        st.cache_data.clear()
+        st.cache_resource.clear()
+        gc.collect()
+        st.rerun()
+    
+    if st.button("Clear Session State"):
+        keys_to_clear = [k for k in st.session_state.keys() if k != 'rerun_count']
+        for key in keys_to_clear:
+            del st.session_state[key]
+        st.rerun()
 
 st.markdown("""
 <style>
@@ -765,18 +824,33 @@ filter_options = get_filter_options(df)
 # --- SIDEBAR FILTERS ---
 
 # Initialize session state for filters if not exists
-if 'initialized_filters' not in st.session_state:
-    st.session_state.initialized_filters = True
-    st.session_state.prev_income_category = None
-    st.session_state.prev_selected_income = None
+# Initialize defaults in session_state ONCE
+if 'income_category_default' not in st.session_state:
+    st.session_state.income_category_default = "LMIC"
 
+if 'selected_income_default' not in st.session_state:
+    if 'Income Level' in df.columns and filter_options['lmic_levels']:
+        st.session_state.selected_income_default = filter_options['lmic_levels']
+    else:
+        st.session_state.selected_income_default = ['All']
+
+if 'selected_region_default' not in st.session_state:
+    st.session_state.selected_region_default = ['All']
+
+if 'regional_hubs_default' not in st.session_state:
+    st.session_state.regional_hubs_default = ["All"]
+
+if 'selected_pub_type_default' not in st.session_state:
+    st.session_state.selected_pub_type_default = ['All']
+
+# Now create widgets with stable defaults from session_state
 if 'Income Level' in df.columns:
     income_category = st.sidebar.pills(
         "Filter by Income Category:",
         ["All regions", "LMIC"],
         selection_mode="single",
-        default="LMIC",
-        key="income_category_pills"  # Add unique key
+        default=st.session_state.income_category_default,
+        key="income_category_pills"
     )
     
     if income_category == "LMIC" and filter_options['lmic_levels']:
@@ -784,10 +858,12 @@ if 'Income Level' in df.columns:
             "Narrow Income level:",
             filter_options['lmic_levels'],
             selection_mode="multi",
-            default=filter_options['lmic_levels'],
-            key="income_level_pills"  # Add unique key
+            default=st.session_state.selected_income_default,
+            key="income_level_pills"
         )
         selected_income = selected_lmic_raw if selected_lmic_raw else filter_options['lmic_levels']
+        # Update default for next run
+        st.session_state.selected_income_default = selected_income
     else:
         selected_income = [] if income_category == "LMIC" else ['All']
 else:
@@ -801,10 +877,11 @@ selected_region_raw = st.sidebar.pills(
     "Filter by Region:",
     filter_options['regions'],
     selection_mode="multi",
-    default=['All'],
-    key="region_pills"  # Add unique key
+    default=st.session_state.selected_region_default,
+    key="region_pills"
 )
 selected_region = handle_all_selection(tuple(selected_region_raw), tuple(filter_options['regions']))
+st.session_state.selected_region_default = selected_region
 
 with st.sidebar:
     st.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
@@ -813,14 +890,15 @@ regional_hubs = st.sidebar.pills(
     "Regional Excellence Hub:",
     options=["All", "A*STAR SIgN", "Institut Pasteur Network", "KEMRI-Wellcome", "AHRI"],
     selection_mode="multi",
-    default=["All"],
-    key="regional_hubs_pills"  # Add unique key
+    default=st.session_state.regional_hubs_default,
+    key="regional_hubs_pills"
 )
 
 if "All" in regional_hubs and len(regional_hubs) > 1:
     regional_hubs = [item for item in regional_hubs if item != "All"]
 elif not regional_hubs:
     regional_hubs = ["All"]
+st.session_state.regional_hubs_default = regional_hubs
 
 with st.sidebar:
     st.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
@@ -829,10 +907,11 @@ selected_pub_type_raw = st.sidebar.pills(
     "Publication Type:",
     filter_options['pub_types'],
     selection_mode="multi",
-    default=['All'],
-    key="pub_type_pills"  # Add unique key
+    default=st.session_state.selected_pub_type_default,
+    key="pub_type_pills"
 )
 selected_pub_type = handle_all_selection(tuple(selected_pub_type_raw), tuple(filter_options['pub_types']))
+st.session_state.selected_pub_type_default = selected_pub_type
 
 # Create stable filter signature using sorted tuples
 filter_signature = (
