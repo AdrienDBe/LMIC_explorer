@@ -102,67 +102,46 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ==================== BUTTONS ==================== */
 
-/* Base styling for all pill buttons */
-.stPills button {
-    padding: 0.5rem 1rem !important;
-    border-radius: 20px !important;
-    transition: all 0.2s ease !important;
-    font-weight: 500 !important;
+/* Generic buttons - exclude pills AND radio buttons */
+button:not([kind="pills"]):not([kind="pillsActive"]):not([role="radio"]):not(.st-emotion-cache-*[data-testid*="Radio"]), 
+[data-testid="baseButton-primary"] {
+    background-color: #a7d4fa !important;
+    color: #000000 !important;
+    border: none !important;
 }
 
-/* Unselected pill buttons - gray background */
-.stPills button[kind="pills"],
-button.st-emotion-cache-b0zc2i.e1mwqyj910 {
-    background-color: #F0F0F0 !important;
-    color: #262730 !important;
-    border: 1px solid #D3D3D3 !important;
+button:not([kind="pills"]):not([kind="pillsActive"]):not([role="radio"]):hover {
+    background-color: #73b9f5 !important;
+    color: #FFFFFF !important;
 }
 
-/* Unselected pill button hover */
-.stPills button[kind="pills"]:hover,
-button.st-emotion-cache-b0zc2i.e1mwqyj910:hover {
-    background-color: #E8E8E8 !important;
-    color: #262730 !important;
-    border: 1px solid #B0B0B0 !important;
+/* ==================== RADIO BUTTONS ==================== */
+
+/* Radio button container */
+[data-testid="stRadio"] {
+    background-color: transparent !important;
 }
 
-/* Selected pill buttons - TARGET THE EXACT EMOTION CLASS */
-button.st-emotion-cache-tx7mgd.e1mwqyj911,
-button.st-emotion-cache-tx7mgd.e1mwqyj911[kind="pillsActive"],
-.stPills button[kind="pillsActive"] {
+/* Radio button circles - unselected */
+[data-testid="stRadio"] input[type="radio"] {
+    accent-color: #82C5E0 !important;
+}
+
+/* Radio button circles - selected (remove red) */
+[data-testid="stRadio"] input[type="radio"]:checked {
+    accent-color: #82C5E0 !important;
     background-color: #82C5E0 !important;
-    color: #FFFFFF !important;
-    border: 1px solid #82C5E0 !important;
     border-color: #82C5E0 !important;
-    font-weight: 600 !important;
 }
 
-/* Selected pill button hover */
-button.st-emotion-cache-tx7mgd.e1mwqyj911:hover,
-.stPills button[kind="pillsActive"]:hover {
-    background-color: #6BADCC !important;
-    color: #FFFFFF !important;
-    border: 1px solid #6BADCC !important;
-    border-color: #6BADCC !important;
-}
-
-/* Popover button - match unselected pill style */
-[data-testid="stPopover"] button,
-.stPopover button {
-    background-color: #F0F0F0 !important;
+/* Radio button labels */
+[data-testid="stRadio"] label {
     color: #262730 !important;
-    border: 1px solid #D3D3D3 !important;
-    font-weight: 500 !important;
-    padding: 0.5rem 1rem !important;
-    border-radius: 20px !important;
-    transition: all 0.2s ease !important;
 }
 
-/* Popover button hover */
-[data-testid="stPopover"] button:hover,
-.stPopover button:hover {
-    background-color: #E8E8E8 !important;
-    color: #262730 !important;
+/* Force override any red styling */
+[data-testid="stRadio"] * {
+    border-color: #82C5E0 !important;
 }
 
 
