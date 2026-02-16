@@ -23,98 +23,51 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-/* ==================== FORCE LIGHT MODE - COMPREHENSIVE ==================== */
+/* =========================
+   RADIO BUTTONS
+========================= */
 
-/* Root containers */
-html, body {
-    background-color: #FFFFFF !important;
-    color: #262730 !important;
+div[role="radiogroup"] label:has(input[type="radio"]) > div:first-child {
+    border: 2px solid #82C5E0 !important;
+    background-color: transparent !important;
 }
 
-[data-testid="stAppViewContainer"] {
-    background-color: #FFFFFF !important;
+div[role="radiogroup"] label:has(input[type="radio"]:checked) > div:first-child {
+    background-color: #82C5E0 !important;
+    border: 2px solid #82C5E0 !important;
 }
 
-[data-testid="stSidebar"] {
-    background-color: #F0F2F6 !important;
+div[role="radiogroup"] label:has(input[type="radio"]:checked) > div:first-child::after {
+    content: "";
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: white;
+    border-radius: 50%;
 }
 
-[data-testid="stSidebarContent"] {
-    background-color: #F0F2F6 !important;
+/* =========================
+   PILLS (BUTTONS)
+========================= */
+
+.stButton > button {
+    border-radius: 20px !important;
+    background-color: transparent !important;
+    border: 1px solid #ccc !important;
+    color: #666 !important;
 }
 
-/* Main content */
-div.stMain {
-    background-color: #FFFFFF !important;
+.stButton > button[aria-pressed="true"] {
+    background-color: transparent !important;
+    border: 1px solid #82C5E0 !important;
+    color: #82C5E0 !important;
 }
 
-div.block-container {
-    background-color: #FFFFFF !important;
+.stButton > button:hover {
+    background-color: transparent !important;
+    border: 1px solid #82C5E0 !important;
+    color: #82C5E0 !important;
 }
-
-/* ==================== TEXT & TYPOGRAPHY ==================== */
-
-p, span, label, div {
-    color: #262730 !important;
-}
-
-h1, h2, h3, h4, h5, h6 {
-    color: #262730 !important;
-}
-
-.stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
-    color: #262730 !important;
-}
-
-/* ==================== FORMS & INPUTS ==================== */
-
-input, textarea, select {
-    background-color: #FFFFFF !important;
-    color: #262730 !important;
-    border: 1px solid #D3D3D3 !important;
-}
-
-input::placeholder {
-    color: #999999 !important;
-}
-
-textarea::placeholder {
-    color: #999999 !important;
-}
-
-/* Focus states */
-input:focus, textarea:focus, select:focus {
-    background-color: #FFFFFF !important;
-    color: #262730 !important;
-    border: 2px solid #4682b4 !important;
-}
-
-/* ==================== BUTTONS ==================== */
-
-button, [data-testid="baseButton-primary"] {
-    background-color: #4682b4 !important;
-    color: #FFFFFF !important;
-    border: none !important;
-}
-
-button:hover {
-    background-color: #356a99 !important;
-    color: #FFFFFF !important;
-}
-
-/* Pill buttons */
-.stPills button {
-    background-color: #E8E8E8 !important;
-    color: #FFFFFF !important;
-    border: 1px solid #D3D3D3 !important;
-}
-
-.stPills button[data-testid*="pill-button"]:not([aria-pressed="false"]) {
-    background-color: #4682b4 !important;
-    color: #FFFFFF !important;
-    border: 1px solid #4682b4 !important;
-}
-
 /* ==================== DATAFRAMES & TABLES ==================== */
 
 [data-testid="stDataFrame"],
@@ -175,20 +128,7 @@ button:hover {
     color: #262730 !important;
 }
 
-/* ==================== RADIO & CHECKBOX ==================== */
 
-[data-testid="stRadio"] label,
-[data-testid="stCheckbox"] label {
-    color: #262730 !important;
-}
-
-/* ==================== METRIC VALUES ==================== */
-
-[data-testid="stMetricValue"],
-[data-testid="stMetricLabel"],
-[data-testid="stMetricDelta"] {
-    color: #262730 !important;
-}
 
 /* ==================== POPOVER ==================== */
 
