@@ -924,93 +924,38 @@ if st.session_state.rerun_count > 10:
             st.warning("Try refreshing the page (F5) to reset the app.")
             st.stop()
 
-# --- SIDEBAR FILTERS ---
+# --- SIDEBAR FILTERS (SIMPLIFIED TO PREVENT RERUN LOOPS) ---
 
-# Prevent cascading updates
-if 'is_updating' not in st.session_state:
-    st.session_state.is_updating = False
+# Remove all callbacks - they cause loops
+# Just use widget keys and read directly from session_state
 
-def safe_update(callback_func):
-    """Wrapper to prevent cascading callbacks"""
-    def wrapper():
-        if not st.session_state.is_updating:
-            st.session_state.is_updating = True
-            callback_func()
-            st.session_state.is_updating = False
-    return wrapper
-    
-# Callback functions with safe updates
-def update_income_category():
-    if not st.session_state.get('is_updating', False):
-        st.session_state.income_category_value = st.session_state.income_category_pills
-
-def update_income_level():
-    # Disabled - causing rerun loop
-    pass
-
-def update_region():
-    if not st.session_state.get('is_updating', False):
-        st.session_state.region_value = st.session_state.region_pills
-
-def update_regional_hubs():
-    if not st.session_state.get('is_updating', False):
-        st.session_state.regional_hubs_value = st.session_state.regional_hubs_pills
-
-def update_pub_type():
-    if not st.session_state.get('is_updating', False):
-        st.session_state.pub_type_value = st.session_state.pub_type_pills
-
-# Initialize values in session_state ONCE
-if 'income_category_value' not in st.session_state:
-    st.session_state.income_category_value = "LMIC"
-
-if 'income_level_value' not in st.session_state:
-    if 'Income Level' in df.columns and filter_options['lmic_levels']:
-        st.session_state.income_level_value = filter_options['lmic_levels']
-    else:
-        st.session_state.income_level_value = ['All']
-
-if 'region_value' not in st.session_state:
-    st.session_state.region_value = ['All']
-
-if 'regional_hubs_value' not in st.session_state:
-    st.session_state.regional_hubs_value = ["All"]
-
-if 'pub_type_value' not in st.session_state:
-    st.session_state.pub_type_value = ['All']
-
-# Create widgets with callbacks
 if 'Income Level' in df.columns:
-    st.sidebar.pills(
+    income_category = st.sidebar.pills(
         "Filter by Income Category:",
         ["All regions", "LMIC"],
         selection_mode="single",
-        default=st.session_state.income_category_value,
-        key="income_category_pills",
-        on_change=update_income_category
+        key="income_category_pills"
     )
-    income_category = st.session_state.income_category_value
     
     if income_category == "LMIC" and filter_options['lmic_levels']:
-        # Only update default if it doesn't exist or is invalid
-        if 'income_level_value' not in st.session_state or not st.session_state.income_level_value:
-            st.session_state.income_level_value = filter_options['lmic_levels']
+        # Store the result, use it as default next time
+        if 'last_income_selection' not in st.session_state:
+            st.session_state.last_income_selection = filter_options['lmic_levels']
         
-        # Don't use callback - read value directly after widget renders
-        income_pills_result = st.sidebar.pills(
+        income_pills_raw = st.sidebar.pills(
             "Narrow Income level:",
             filter_options['lmic_levels'],
             selection_mode="multi",
-            default=st.session_state.income_level_value,
-            key="income_level_pills"
-            # NO on_change callback
+            default=st.session_state.last_income_selection,
+            key="income_level_pills_v2"  # Changed key to reset state
         )
         
-        # Update session state only if value actually changed
-        if income_pills_result != st.session_state.income_level_value:
-            st.session_state.income_level_value = income_pills_result
-        
-        selected_income = income_pills_result if income_pills_result else filter_options['lmic_levels']
+        # Only update if not empty
+        if income_pills_raw:
+            st.session_state.last_income_selection = income_pills_raw
+            selected_income = income_pills_raw
+        else:
+            selected_income = filter_options['lmic_levels']
     else:
         selected_income = [] if income_category == "LMIC" else ['All']
 else:
@@ -1020,47 +965,43 @@ else:
 with st.sidebar:
     st.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
 
-st.sidebar.pills(
+selected_region_raw = st.sidebar.pills(
     "Filter by Region:",
     filter_options['regions'],
     selection_mode="multi",
-    default=st.session_state.region_value,
-    key="region_pills",
-    on_change=update_region
+    default=['All'],
+    key="region_pills_v2"  # Changed key
 )
-selected_region_raw = st.session_state.region_value
 selected_region = handle_all_selection(tuple(selected_region_raw), tuple(filter_options['regions']))
 
 with st.sidebar:
     st.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
 
-st.sidebar.pills(
+regional_hubs_raw = st.sidebar.pills(
     "Regional Excellence Hub:",
     options=["All", "A*STAR SIgN", "Institut Pasteur Network", "KEMRI-Wellcome", "AHRI"],
     selection_mode="multi",
-    default=st.session_state.regional_hubs_value,
-    key="regional_hubs_pills",
-    on_change=update_regional_hubs
+    default=["All"],
+    key="regional_hubs_pills_v2"  # Changed key
 )
-regional_hubs = st.session_state.regional_hubs_value
 
-if "All" in regional_hubs and len(regional_hubs) > 1:
-    regional_hubs = [item for item in regional_hubs if item != "All"]
-elif not regional_hubs:
+if "All" in regional_hubs_raw and len(regional_hubs_raw) > 1:
+    regional_hubs = [item for item in regional_hubs_raw if item != "All"]
+elif not regional_hubs_raw:
     regional_hubs = ["All"]
+else:
+    regional_hubs = regional_hubs_raw
 
 with st.sidebar:
     st.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
 
-st.sidebar.pills(
+selected_pub_type_raw = st.sidebar.pills(
     "Publication Type:",
     filter_options['pub_types'],
     selection_mode="multi",
-    default=st.session_state.pub_type_value,
-    key="pub_type_pills",
-    on_change=update_pub_type
+    default=['All'],
+    key="pub_type_pills_v2"  # Changed key
 )
-selected_pub_type_raw = st.session_state.pub_type_value
 selected_pub_type = handle_all_selection(tuple(selected_pub_type_raw), tuple(filter_options['pub_types']))
 
 # Create stable filter signature - only if values actually changed
