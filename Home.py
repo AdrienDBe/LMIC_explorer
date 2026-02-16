@@ -180,6 +180,26 @@ button.st-emotion-cache-tx7mgd.e1mwqyj911:hover,
     border: 1px solid #6BADCC !important;
     border-color: #6BADCC !important;
 }
+
+/* Popover button - match unselected pill style */
+[data-testid="stPopover"] button,
+.stPopover button {
+    background-color: #F0F0F0 !important;
+    color: #262730 !important;
+    border: 1px solid #D3D3D3 !important;
+    font-weight: 500 !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: 20px !important;
+    transition: all 0.2s ease !important;
+}
+
+/* Popover button hover */
+[data-testid="stPopover"] button:hover,
+.stPopover button:hover {
+    background-color: #E8E8E8 !important;
+    color: #262730 !important;
+    border: 1px solid #B0B0B0 !important;
+}
 /* ==================== DATAFRAMES & TABLES ==================== */
 
 [data-testid="stDataFrame"],
