@@ -165,30 +165,7 @@ button.st-emotion-cache-tx7mgd.e1mwqyj911:hover,
     color: #262730 !important;
     border: 1px solid #B0B0B0 !important;
 }
-/* ==================== DATAFRAMES & TABLES ==================== */
 
-[data-testid="stDataFrame"],
-[data-testid="stTable"] {
-    background-color: #FFFFFF !important;
-}
-
-[data-testid="stDataFrame"] th,
-[data-testid="stTable"] th {
-    background-color: #E8E8E8 !important;
-    color: #262730 !important;
-}
-
-[data-testid="stDataFrame"] td,
-[data-testid="stTable"] td {
-    background-color: #FFFFFF !important;
-    color: #262730 !important;
-    border-color: #D3D3D3 !important;
-}
-
-/* Data editor */
-[data-testid="stDataEditor"] {
-    background-color: #FFFFFF !important;
-}
 
 /* ==================== EXPANDERS & CONTAINERS ==================== */
 
@@ -205,25 +182,6 @@ button.st-emotion-cache-tx7mgd.e1mwqyj911:hover,
     color: #262730 !important;
 }
 
-/* ==================== SELECTBOX & DROPDOWN ==================== */
-
-[data-testid="stSelectbox"] {
-    background-color: #FFFFFF !important;
-}
-
-[role="listbox"] {
-    background-color: #FFFFFF !important;
-    color: #262730 !important;
-}
-
-[role="option"] {
-    color: #262730 !important;
-}
-
-[role="option"]:hover {
-    background-color: #E8E8E8 !important;
-    color: #262730 !important;
-}
 
 /* ==================== RADIO & CHECKBOX ==================== */
 
@@ -232,25 +190,12 @@ button.st-emotion-cache-tx7mgd.e1mwqyj911:hover,
     color: #262730 !important;
 }
 
-/* ==================== METRIC VALUES ==================== */
-
-[data-testid="stMetricValue"],
-[data-testid="stMetricLabel"],
-[data-testid="stMetricDelta"] {
-    color: #262730 !important;
-}
 
 /* ==================== POPOVER ==================== */
 
 [data-testid="stPopover"] {
     background-color: #FFFFFF !important;
     border: 1px solid #D3D3D3 !important;
-}
-
-/* ==================== COLUMNS & LAYOUT ==================== */
-
-[data-testid="column"] {
-    background-color: #FFFFFF !important;
 }
 
 /* ==================== PLOTLY CHARTS ==================== */
@@ -267,14 +212,6 @@ button.st-emotion-cache-tx7mgd.e1mwqyj911:hover,
     display: none !important;
 }
 
-/* ==================== MESSAGES ==================== */
-
-[data-testid="stAlert"] {
-    background-color: #F5F5F5 !important;
-    color: #262730 !important;
-    border-color: #D3D3D3 !important;
-}
-
 /* ==================== SIDEBAR SPECIFIC ==================== */
 
 .sidebar-content {
@@ -287,25 +224,7 @@ div[role="region"] {
     background-color: transparent !important;
 }
 
-/* ==================== SCROLLBAR ==================== */
 
-::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-}
-
-::-webkit-scrollbar-track {
-    background: #F0F2F6 !important;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #B0B0B0 !important;
-    border-radius: 5px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: #808080 !important;
-}
 
 /* ==================== REMOVE DARK MODE ARTIFACTS ==================== */
 
