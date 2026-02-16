@@ -411,7 +411,7 @@ def load_and_preprocess_data(filepath):
         st.error(f"Error loading data: {str(e)}")
         return None, {}
 
-@st.cache_data
+@st.cache_data(hash_funcs={pd.DataFrame: lambda x: id(x)})  # Hash by ID not content
 def get_unique_values(df, column):
     """Get unique values for a column with caching"""
     if column in df.columns:
@@ -762,12 +762,21 @@ filter_options = get_filter_options(df)
 
 # --- SIDEBAR FILTERS ---
 
+# --- SIDEBAR FILTERS ---
+
+# Initialize session state for filters if not exists
+if 'initialized_filters' not in st.session_state:
+    st.session_state.initialized_filters = True
+    st.session_state.prev_income_category = None
+    st.session_state.prev_selected_income = None
+
 if 'Income Level' in df.columns:
     income_category = st.sidebar.pills(
         "Filter by Income Category:",
         ["All regions", "LMIC"],
         selection_mode="single",
-        default="LMIC"
+        default="LMIC",
+        key="income_category_pills"  # Add unique key
     )
     
     if income_category == "LMIC" and filter_options['lmic_levels']:
@@ -775,7 +784,8 @@ if 'Income Level' in df.columns:
             "Narrow Income level:",
             filter_options['lmic_levels'],
             selection_mode="multi",
-            default=filter_options['lmic_levels']
+            default=filter_options['lmic_levels'],
+            key="income_level_pills"  # Add unique key
         )
         selected_income = selected_lmic_raw if selected_lmic_raw else filter_options['lmic_levels']
     else:
@@ -791,7 +801,8 @@ selected_region_raw = st.sidebar.pills(
     "Filter by Region:",
     filter_options['regions'],
     selection_mode="multi",
-    default=['All']
+    default=['All'],
+    key="region_pills"  # Add unique key
 )
 selected_region = handle_all_selection(tuple(selected_region_raw), tuple(filter_options['regions']))
 
@@ -802,7 +813,8 @@ regional_hubs = st.sidebar.pills(
     "Regional Excellence Hub:",
     options=["All", "A*STAR SIgN", "Institut Pasteur Network", "KEMRI-Wellcome", "AHRI"],
     selection_mode="multi",
-    default=["All"]
+    default=["All"],
+    key="regional_hubs_pills"  # Add unique key
 )
 
 if "All" in regional_hubs and len(regional_hubs) > 1:
@@ -817,20 +829,28 @@ selected_pub_type_raw = st.sidebar.pills(
     "Publication Type:",
     filter_options['pub_types'],
     selection_mode="multi",
-    default=['All']
+    default=['All'],
+    key="pub_type_pills"  # Add unique key
 )
 selected_pub_type = handle_all_selection(tuple(selected_pub_type_raw), tuple(filter_options['pub_types']))
 
-# Apply filters - cache in session_state
-filter_signature = f"{income_category}_{tuple(selected_income)}_{tuple(selected_region)}_{tuple(selected_pub_type)}"
+# Create stable filter signature using sorted tuples
+filter_signature = (
+    income_category,
+    tuple(sorted(selected_income)) if isinstance(selected_income, list) else selected_income,
+    tuple(sorted(selected_region)) if isinstance(selected_region, list) else selected_region,
+    tuple(sorted(selected_pub_type)) if isinstance(selected_pub_type, list) else selected_pub_type
+)
 
+# Only recalculate if filter signature actually changed
 if 'filter_signature' not in st.session_state or st.session_state.filter_signature != filter_signature:
-    filtered_df = filter_data_by_selections(df, income_category, selected_income, selected_region, selected_pub_type, ['All'])
-    st.session_state.filtered_df = filtered_df
-    st.session_state.filter_signature = filter_signature
+    with st.spinner("Applying filters..."):
+        filtered_df = filter_data_by_selections(df, income_category, selected_income, selected_region, selected_pub_type, ['All'])
+        st.session_state.filtered_df = filtered_df
+        st.session_state.filter_signature = filter_signature
 else:
     filtered_df = st.session_state.filtered_df
-
+    
 # --- MAIN CONTENT ---
 
 if 'Country' not in filtered_df.columns:
@@ -842,13 +862,26 @@ else:
         map_display_type = st.radio("",
             options=["Publications", "Authors", "Organizations"],
             index=1,
-            horizontal=True
+            horizontal=True,
+            key="map_display_type_radio"  # Add unique key
         )
-
-        country_counts, display_label, map_filtered_df = calculate_map_data(
-            filtered_df, map_display_type, tuple(regional_hubs)
-        )
-
+    
+        # Cache the map calculation in session_state
+        map_cache_key = f"{map_display_type}_{tuple(regional_hubs)}_{filter_signature}"
+        
+        if 'map_cache_key' not in st.session_state or st.session_state.map_cache_key != map_cache_key:
+            country_counts, display_label, map_filtered_df = calculate_map_data(
+                filtered_df, map_display_type, tuple(regional_hubs)
+            )
+            st.session_state.country_counts = country_counts
+            st.session_state.display_label = display_label
+            st.session_state.map_filtered_df = map_filtered_df
+            st.session_state.map_cache_key = map_cache_key
+        else:
+            country_counts = st.session_state.country_counts
+            display_label = st.session_state.display_label
+            map_filtered_df = st.session_state.map_filtered_df
+            
         hide_top_countries = "Show all countries"
         num_to_hide = 0
 
