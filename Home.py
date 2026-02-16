@@ -505,6 +505,7 @@ def filter_data_by_selections(df, income_category, selected_income, selected_reg
 
     return filtered_df
 
+@st.cache_data
 def calculate_map_data(df, map_display_type, regional_hubs_tuple):
     """Calculate country counts for map display - REMOVED CACHING for real-time updates"""
     map_filtered_df = df.copy()
@@ -541,6 +542,7 @@ def calculate_map_data(df, map_display_type, regional_hubs_tuple):
     
     return country_counts, display_label, map_filtered_df
 
+@st.cache_data
 def calculate_search_results(df, search_term, search_org, selected_countries_pills, regional_hubs_tuple):
     """Calculate search results - REMOVED CACHING for real-time updates"""
     search_results = df.copy()
@@ -572,7 +574,7 @@ def calculate_search_results(df, search_term, search_org, selected_countries_pil
     
     return search_results
     
-
+@st.cache_data
 def process_grouped_data(search_results, display_type):
     """Process grouped data - SIMPLIFIED"""
     
@@ -1058,7 +1060,7 @@ else:
 
     # Calculate fresh each time
     search_results = calculate_search_results(
-        filtered_df, search_term, search_org, selected_countries_pills, tuple(regional_hubs)
+        filtered_df, search_term, search_org, tuple(selected_countries_pills), tuple(regional_hubs)
     )
 
     # Don't cache the groupby - do it fresh
