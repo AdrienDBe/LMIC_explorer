@@ -23,13 +23,298 @@ st.set_page_config(
 
 st.markdown("""
 <style>
+/* ==================== FORCE LIGHT MODE - COMPREHENSIVE ==================== */
+
+/* Root containers */
+html, body {
+    background-color: #FFFFFF !important;
+    color: #262730 !important;
+}
+
+[data-testid="stAppViewContainer"] {
+    background-color: #FFFFFF !important;
+}
+
+[data-testid="stSidebar"] {
+    background-color: #F0F2F6 !important;
+}
+
+[data-testid="stSidebarContent"] {
+    background-color: #F0F2F6 !important;
+}
+
+/* Main content */
+div.stMain {
+    background-color: #FFFFFF !important;
+    padding: 1rem !important;
+}
+
 div.block-container {
+    background-color: #FFFFFF !important;
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+}
+
+/* ==================== FIX TOP CUTOFF ISSUE ==================== */
+
+[data-testid="stAppViewContainer"] {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+[data-testid="stAppViewContainer"] > * {
+    margin-top: 0 !important;
+}
+
+/* Radio buttons and controls */
+[data-testid="stRadio"],
+[data-testid="stPills"] {
+    margin-top: 0.5rem !important;
     padding-top: 0.5rem !important;
 }
-.stMarkdown h2 {
-    margin-top: 0rem !important;
-    margin-bottom: 0.5rem !important;
+
+/* Header visibility */
+[data-testid="stHeader"] {
+    visibility: visible !important;
+    display: block !important;
+    margin-bottom: 1rem !important;
 }
+
+/* Toolbar visibility */
+div[data-testid="stToolbar"] {
+    visibility: visible !important;
+}
+
+/* ==================== TEXT & TYPOGRAPHY ==================== */
+
+p, span, label, div {
+    color: #262730 !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: #262730 !important;
+}
+
+.stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
+    color: #262730 !important;
+}
+
+/* ==================== FORMS & INPUTS ==================== */
+
+input, textarea, select {
+    background-color: #FFFFFF !important;
+    color: #262730 !important;
+    border: 1px solid #D3D3D3 !important;
+}
+
+input::placeholder {
+    color: #999999 !important;
+}
+
+textarea::placeholder {
+    color: #999999 !important;
+}
+
+/* Focus states */
+input:focus, textarea:focus, select:focus {
+    background-color: #FFFFFF !important;
+    color: #262730 !important;
+    border: 2px solid #4682b4 !important;
+}
+
+/* ==================== BUTTONS ==================== */
+
+button, [data-testid="baseButton-primary"] {
+    background-color: #4682b4 !important;
+    color: #FFFFFF !important;
+    border: none !important;
+}
+
+button:hover {
+    background-color: #356a99 !important;
+    color: #FFFFFF !important;
+}
+
+/* Pill buttons */
+.stPills button {
+    background-color: #E8E8E8 !important;
+    color: #262730 !important;
+    border: 1px solid #D3D3D3 !important;
+}
+
+.stPills button[data-testid*="pill-button"]:not([aria-pressed="false"]) {
+    background-color: #4682b4 !important;
+    color: #FFFFFF !important;
+    border: 1px solid #4682b4 !important;
+}
+
+/* ==================== DATAFRAMES & TABLES ==================== */
+
+[data-testid="stDataFrame"],
+[data-testid="stTable"] {
+    background-color: #FFFFFF !important;
+}
+
+[data-testid="stDataFrame"] th,
+[data-testid="stTable"] th {
+    background-color: #E8E8E8 !important;
+    color: #262730 !important;
+}
+
+[data-testid="stDataFrame"] td,
+[data-testid="stTable"] td {
+    background-color: #FFFFFF !important;
+    color: #262730 !important;
+    border-color: #D3D3D3 !important;
+}
+
+/* Data editor */
+[data-testid="stDataEditor"] {
+    background-color: #FFFFFF !important;
+}
+
+/* ==================== EXPANDERS & CONTAINERS ==================== */
+
+[data-testid="stExpander"] {
+    background-color: #FFFFFF !important;
+    border: 1px solid #D3D3D3 !important;
+}
+
+[data-testid="stExpander"] button {
+    color: #262730 !important;
+}
+
+[data-testid="stExpander"] summary {
+    color: #262730 !important;
+}
+
+/* ==================== SELECTBOX & DROPDOWN ==================== */
+
+[data-testid="stSelectbox"] {
+    background-color: #FFFFFF !important;
+}
+
+[role="listbox"] {
+    background-color: #FFFFFF !important;
+    color: #262730 !important;
+}
+
+[role="option"] {
+    color: #262730 !important;
+}
+
+[role="option"]:hover {
+    background-color: #E8E8E8 !important;
+    color: #262730 !important;
+}
+
+/* ==================== RADIO & CHECKBOX ==================== */
+
+[data-testid="stRadio"] label,
+[data-testid="stCheckbox"] label {
+    color: #262730 !important;
+}
+
+/* ==================== METRIC VALUES ==================== */
+
+[data-testid="stMetricValue"],
+[data-testid="stMetricLabel"],
+[data-testid="stMetricDelta"] {
+    color: #262730 !important;
+}
+
+/* ==================== POPOVER ==================== */
+
+[data-testid="stPopover"] {
+    background-color: #FFFFFF !important;
+    border: 1px solid #D3D3D3 !important;
+}
+
+/* ==================== COLUMNS & LAYOUT ==================== */
+
+[data-testid="column"] {
+    background-color: #FFFFFF !important;
+}
+
+/* ==================== PLOTLY CHARTS ==================== */
+
+.plotly {
+    background-color: #FFFFFF !important;
+}
+
+.plotly .bg {
+    fill: #FFFFFF !important;
+}
+
+.plotly-notebooklogo {
+    display: none !important;
+}
+
+/* ==================== MESSAGES ==================== */
+
+[data-testid="stAlert"] {
+    background-color: #F5F5F5 !important;
+    color: #262730 !important;
+    border-color: #D3D3D3 !important;
+}
+
+/* ==================== SIDEBAR SPECIFIC ==================== */
+
+.sidebar-content {
+    background-color: #F0F2F6 !important;
+    color: #262730 !important;
+}
+
+/* Remove any dark overlays */
+div[role="region"] {
+    background-color: transparent !important;
+}
+
+/* ==================== SCROLLBAR ==================== */
+
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #F0F2F6 !important;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #B0B0B0 !important;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #808080 !important;
+}
+
+/* ==================== REMOVE DARK MODE ARTIFACTS ==================== */
+
+[data-testid="stAppViewContainer"].dark {
+    background-color: #FFFFFF !important;
+}
+
+/* Force all text to be dark */
+* {
+    color: #262730 !important;
+}
+
+/* Except for white text that should stay white */
+button, [data-testid="baseButton-primary"] {
+    color: #FFFFFF !important;
+}
+
+/* ==================== RESPONSIVE FIXES ==================== */
+
+@media (prefers-color-scheme: dark) {
+    html, body, [data-testid="stAppViewContainer"] {
+        background-color: #FFFFFF !important;
+        color: #262730 !important;
+    }
+}
+
 </style>
 """, unsafe_allow_html=True)
 
