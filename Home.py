@@ -34,6 +34,26 @@ if 'rerun_count' not in st.session_state:
 else:
     st.session_state.rerun_count += 1
 
+# Force aggressive cleanup every 3 reruns
+if st.session_state.rerun_count % 3 == 0:
+    # Clear any cached DataFrames from session_state
+    keys_to_remove = []
+    for key in st.session_state.keys():
+        if key.endswith('_df') or key.endswith('_data'):
+            try:
+                if isinstance(st.session_state[key], pd.DataFrame):
+                    size_mb = st.session_state[key].memory_usage(deep=True).sum() / 1024**2
+                    if size_mb > 5:  # Remove DataFrames over 5MB
+                        keys_to_remove.append(key)
+            except:
+                pass
+    
+    for key in keys_to_remove:
+        del st.session_state[key]
+    
+    gc.collect()
+    log_memory(f"After cleanup (rerun {st.session_state.rerun_count})")
+
 # Force garbage collection every 5 reruns
 if st.session_state.rerun_count % 5 == 0:
     gc.collect()
@@ -721,7 +741,6 @@ def process_grouped_data(search_results, display_type):
         return pd.DataFrame(), []
 
 # Helper function
-@lru_cache(maxsize=128)
 def handle_all_selection(current_selection_tuple, all_options_tuple):
     """Handle 'All' selection logic"""
     current_selection = list(current_selection_tuple)
@@ -741,6 +760,20 @@ def handle_all_selection(current_selection_tuple, all_options_tuple):
         return ['All']
     
     return current_selection
+
+def store_in_session_lightweight(key, data):
+    """Store data in session state with memory limits"""
+    if isinstance(data, pd.DataFrame):
+        # Only store if under 10MB
+        size_mb = data.memory_usage(deep=True).sum() / 1024**2
+        if size_mb < 10:
+            st.session_state[key] = data
+        else:
+            st.warning(f"⚠️ Not caching {key} - too large ({size_mb:.1f}MB)")
+            return data
+    else:
+        st.session_state[key] = data
+    return data
 
 # --- MAIN APP LOGIC ---
 
@@ -947,9 +980,12 @@ filter_changed = (st.session_state.filter_signature != new_filter_signature)
 if filter_changed:
     with st.spinner("Applying filters..."):
         filtered_df = filter_data_by_selections(df, income_category, selected_income, selected_region, selected_pub_type, ['All'])
-        st.session_state.filtered_df = filtered_df
+        # Don't store large dataframes - recalculate instead
         st.session_state.filter_signature = new_filter_signature
         log_memory("After filtering")
+else:
+    # Recalculate filtered_df (fast operation)
+    filtered_df = filter_data_by_selections(df, income_category, selected_income, selected_region, selected_pub_type, ['All'])
 elif 'filtered_df' in st.session_state:
     filtered_df = st.session_state.filtered_df
 else:
@@ -986,24 +1022,13 @@ else:
             options=["Publications", "Authors", "Organizations"],
             index=1,
             horizontal=True,
-            key="map_display_type_radio"  # Add unique key
+            key="map_display_type_radio"
         )
     
-        # Cache the map calculation in session_state
-        map_cache_key = f"{map_display_type}_{tuple(regional_hubs)}_{filter_signature}"
-        
-        if 'map_cache_key' not in st.session_state or st.session_state.map_cache_key != map_cache_key:
-            country_counts, display_label, map_filtered_df = calculate_map_data(
-                filtered_df, map_display_type, tuple(regional_hubs)
-            )
-            st.session_state.country_counts = country_counts
-            st.session_state.display_label = display_label
-            st.session_state.map_filtered_df = map_filtered_df
-            st.session_state.map_cache_key = map_cache_key
-        else:
-            country_counts = st.session_state.country_counts
-            display_label = st.session_state.display_label
-            map_filtered_df = st.session_state.map_filtered_df
+        # Recalculate directly - it's fast and prevents memory buildup
+        country_counts, display_label, map_filtered_df = calculate_map_data(
+            filtered_df, map_display_type, tuple(regional_hubs)
+        )
             
         hide_top_countries = "Show all countries"
         num_to_hide = 0
@@ -1163,6 +1188,7 @@ else:
         )
         
         st.plotly_chart(fig_heatmap, use_container_width=True)
+        del fig_heatmap  # Delete the figure object
         gc.collect()  # Clean up after plotly
 
         
@@ -1337,5 +1363,6 @@ else:
             )
             
             st.plotly_chart(fig_scatter, use_container_width=True)
+            del fig_scatter  # Delete the figure object
             gc.collect()  # Clean up after plotly
             st.caption(f"💡 Dot size represents number of publications. Hover over dots for detailed information.")
