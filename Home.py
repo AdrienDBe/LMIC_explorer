@@ -130,11 +130,6 @@ label[data-baseweb="radio"] div.st-c3 {
     background-color: #82C5E0 !important;
 }
 
-/* Force all st-ao divs to have visible borders */
-div.st-ao {
-    border-style: solid !important;
-}
-
 /* Radio label hover */
 label[data-baseweb="radio"]:hover div.st-ao {
     border-color: #82C5E0 !important;
