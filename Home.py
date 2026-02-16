@@ -124,8 +124,6 @@ input:focus, textarea:focus, select:focus {
 
 /* ==================== BUTTONS ==================== */
 
-/* ==================== BUTTONS ==================== */
-
 /* Generic buttons - but NOT pill buttons */
 button:not([kind="pills"]):not([kind="pillsActive"]), 
 [data-testid="baseButton-primary"] {
@@ -161,7 +159,8 @@ button:not([kind="pills"]):not([kind="pillsActive"]):hover {
     border: 1px solid #B0B0B0 !important;
 }
 
-/* Selected pill buttons - blue background */
+/* Selected pill buttons - FORCE blue background with higher specificity */
+button[kind="pillsActive"][data-testid="stBaseButton-pillsActive"],
 .stPills button[kind="pillsActive"] {
     background-color: #82C5E0 !important;
     color: #FFFFFF !important;
@@ -170,6 +169,7 @@ button:not([kind="pills"]):not([kind="pillsActive"]):hover {
 }
 
 /* Selected pill button hover */
+button[kind="pillsActive"][data-testid="stBaseButton-pillsActive"]:hover,
 .stPills button[kind="pillsActive"]:hover {
     background-color: #6BADCC !important;
     color: #FFFFFF !important;
