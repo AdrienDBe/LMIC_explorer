@@ -42,6 +42,10 @@ else:
             gc.collect()
     st.session_state.last_rerun_time = current_time
 
+# Force cleanup every 2 reruns
+if st.session_state.rerun_count % 2 == 0:
+    gc.collect()
+
 # Emergency stop if too many reruns
 if st.session_state.rerun_count > 50:
     st.error("⚠️ Too many page reloads detected. Clearing cache...")
@@ -68,7 +72,11 @@ with st.sidebar.expander("🐛 Debug Info", expanded=False):
     current_mem, peak_mem = get_memory_usage()
     st.write(f"**Memory:** {current_mem:.1f}MB / {peak_mem:.1f}MB")
     
-    if st.button("Clear All Cache"):
+    if st.button("Force Garbage Collection"):
+        gc.collect()
+        st.rerun()
+    
+    if st.button("Clear Cache"):
         st.cache_data.clear()
         st.cache_resource.clear()
         gc.collect()
@@ -350,7 +358,7 @@ def load_and_preprocess_data(filepath):
         st.error(f"Error loading data: {str(e)}")
         return None, {}
 
-@st.cache_data(hash_funcs={pd.DataFrame: lambda x: id(x)})
+@st.cache_data
 def get_unique_values(df, column):
     """Get unique values for a column with caching"""
     if column in df.columns:
@@ -424,7 +432,7 @@ def get_country_coordinates():
     }
     
 def filter_data_by_selections(df, income_category, selected_income, selected_region, selected_pub_type, selected_oa):
-    """Apply filters to dataframe"""
+    """Apply filters to dataframe - NO CACHING"""
     filtered_df = df.copy()
 
     if 'All' not in selected_oa and selected_oa:
@@ -441,12 +449,9 @@ def filter_data_by_selections(df, income_category, selected_income, selected_reg
 
     return filtered_df
 
-@st.cache_data(hash_funcs={pd.DataFrame: lambda x: id(x)})
-def calculate_map_data(df, map_display_type, regional_hubs_tuple):
-    """Calculate country counts for map display"""
+def calculate_map_data(df, map_display_type, regional_hubs):
+    """Calculate country counts for map display - NO CACHING"""
     map_filtered_df = df.copy()
-    
-    regional_hubs = list(regional_hubs_tuple) if isinstance(regional_hubs_tuple, tuple) else regional_hubs_tuple
     
     if "All" not in regional_hubs and regional_hubs:
         hub_countries = get_regional_hub_countries()
@@ -477,12 +482,9 @@ def calculate_map_data(df, map_display_type, regional_hubs_tuple):
     
     return country_counts, display_label, map_filtered_df
 
-@st.cache_data(hash_funcs={pd.DataFrame: lambda x: id(x)})
-def calculate_search_results(df, search_term, search_org, selected_countries_pills, regional_hubs_tuple):
-    """Calculate search results"""
+def calculate_search_results(df, search_term, search_org, selected_countries_pills, regional_hubs):
+    """Calculate search results - NO CACHING"""
     search_results = df.copy()
-    
-    regional_hubs = list(regional_hubs_tuple) if isinstance(regional_hubs_tuple, tuple) else regional_hubs_tuple
     
     if "All" not in regional_hubs and regional_hubs:
         hub_countries = get_regional_hub_countries()
@@ -509,7 +511,7 @@ def calculate_search_results(df, search_term, search_org, selected_countries_pil
     return search_results
     
 def process_grouped_data(search_results, display_type):
-    """Process grouped data"""
+    """Process grouped data - NO CACHING"""
     try:
         df = search_results.copy()
         
@@ -790,7 +792,7 @@ else:
     
         # Calculate map data
         country_counts, display_label, map_filtered_df = calculate_map_data(
-            filtered_df, map_display_type, tuple(regional_hubs)
+            filtered_df, map_display_type, regional_hubs
         )
             
         display_data = country_counts.copy()
@@ -955,7 +957,7 @@ else:
 
     # Calculate search results
     search_results = calculate_search_results(
-        filtered_df, search_term, search_org, selected_countries_pills, tuple(regional_hubs)
+        filtered_df, search_term, search_org, selected_countries_pills, regional_hubs
     )
     
     # Process grouped data
