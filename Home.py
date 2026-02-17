@@ -989,7 +989,7 @@ else:
             legend=dict(
                 title=dict(
                     text="Regional Excellence Network",
-                    font=dict(size=12, color="#262730", family="Arial, sans-serif")
+                    font=dict(size=12, color="#262730", family="Arial, bold")
                 ),
                 yanchor="top",
                 y=0.99,
