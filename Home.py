@@ -724,9 +724,9 @@ else:
     available_countries_for_pills_initial = []
 
 # --- SIDEBAR FILTERS ---
-
-st.sidebar.markdown("### LMIC Explorer")
-st.info("Researchers with 3+ publications; 3204 Immunology (Fields of Research ANZSRC 2020)")
+With st.sidebar:
+    st.sidebar.markdown("# LMIC Explorer")
+    st.info("Researchers with 3+ publications; 3204 Immunology (Fields of Research ANZSRC 2020)")
 
 
 # Filter by Income Category (renamed from "Narrow Income level")
@@ -837,7 +837,7 @@ else:
 
     with col_map1:
         map_display_type = st.radio(
-            "Display Type:",
+            "Visualize:",
             options=["Publications", "Authors", "Organizations"],
             index=1,
             horizontal=True,
