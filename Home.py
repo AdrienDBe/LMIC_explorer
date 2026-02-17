@@ -717,6 +717,19 @@ if 'regional_hubs' not in st.session_state:
 if 'selected_pub_type' not in st.session_state:
     st.session_state.selected_pub_type = ['All']
 
+# --- CALCULATE AVAILABLE COUNTRIES (before sidebar) ---
+# This needs to be calculated early, but we'll update it after exclusion
+if 'Country' in filtered_df.columns:
+    temp_country_counts = filtered_df.groupby('Country')['Country'].count().reset_index(name='Count')
+    temp_country_counts = temp_country_counts[temp_country_counts['Country'] != 'Unknown']
+    available_countries_for_pills_initial = sorted([c for c in temp_country_counts['Country'].tolist() if c != 'Unknown'])
+else:
+    available_countries_for_pills_initial = []
+
+# --- SIDEBAR FILTERS ---
+
+st.sidebar.markdown("### LMIC Explorer")
+
 # --- SIDEBAR FILTERS ---
 
 st.sidebar.markdown("### LMIC Explorer")
@@ -750,6 +763,32 @@ selected_region = handle_all_selection(
     tuple(filter_options['regions'])
 )
 st.session_state.selected_region = selected_region
+
+st.sidebar.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
+
+# Country selector (MOVED HERE from search_col1)
+if len(available_countries_for_pills_initial) > 12:
+    with st.sidebar.popover("Select Countries"):
+        selected_countries_pills = st.pills(
+            "Filter by Countries:",
+            options=["All"] + available_countries_for_pills_initial,
+            selection_mode="multi",
+            default=["All"],
+            key="countries_pills_input"
+        )
+else:
+    selected_countries_pills = st.sidebar.pills(
+        "Filter by Countries:",
+        options=["All"] + available_countries_for_pills_initial,
+        selection_mode="multi",
+        default=["All"],
+        key="countries_pills_input"
+    )
+
+if "All" in selected_countries_pills and len(selected_countries_pills) > 1:
+    selected_countries_pills = [item for item in selected_countries_pills if item != "All"]
+elif not selected_countries_pills:
+    selected_countries_pills = ["All"]
 
 st.sidebar.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
 
@@ -970,31 +1009,7 @@ with search_col1:
         )
     else:
         search_org = 'All'
-    
-    # Country selector pills (MOVED HERE from col_map1)
-    if len(available_countries_for_pills) > 12:
-        with st.popover("🌍 Select Countries"):
-            selected_countries_pills = st.pills(
-                "Filter by Countries:",
-                options=["All"] + available_countries_for_pills,
-                selection_mode="multi",
-                default=["All"],
-                key="countries_pills_input"
-            )
-    else:
-        selected_countries_pills = st.pills(
-            "Filter by Countries:",
-            options=["All"] + available_countries_for_pills,
-            selection_mode="multi",
-            default=["All"],
-            key="countries_pills_input"
-        )
-    
-    if "All" in selected_countries_pills and len(selected_countries_pills) > 1:
-        selected_countries_pills = [item for item in selected_countries_pills if item != "All"]
-    elif not selected_countries_pills:
-        selected_countries_pills = ["All"]
-        
+            
     display_type = search_col1.radio(
         "Display Type:",
         options=["Organizations","Authors"],
