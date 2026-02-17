@@ -946,7 +946,7 @@ else:
             fig_scatter.update_traces(
                 marker=dict(
                     opacity=1,
-                    line=dict(width=1, color='black'),
+                    line=dict(width=0.75, color='black'),
                     color='#82C5E0'
                 )
             )
