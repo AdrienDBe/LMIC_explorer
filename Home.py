@@ -224,18 +224,18 @@ button[kind="pillsActive"][data-testid="stBaseButton-pillsActive"]:hover {
 
 /* Reduce expander content padding */
 [data-testid="stExpander"] [data-testid="stExpanderDetails"] {
-    padding-top: 0 !important;
-}
-
-/* Remove extra space in plotly container */
-[data-testid="stPlotlyChart"] {
-    margin-top: -1rem !important;
-    margin-bottom: -1rem !important;
+    padding-top: 0.5rem !important;
 }
 
 /* Tighten markdown spacing before chart */
 [data-testid="stExpander"] .stMarkdown {
-    margin-bottom: 0.25rem !important;
+    margin-bottom: 0.5rem !important;
+    margin-top: 0 !important;
+}
+
+/* Remove extra bottom padding in expander */
+[data-testid="stExpander"] > div:last-child {
+    padding-bottom: 0.5rem !important;
 }
 
 </style>
