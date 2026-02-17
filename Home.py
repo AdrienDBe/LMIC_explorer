@@ -822,6 +822,51 @@ else:
             hide_index=True,
             height=200
         )
+          # Exclude top countries option
+        with st.popover("⚙️ Exclude Top Countries"):
+            exclude_top_n = st.number_input(
+                "Exclude top N countries:",
+                min_value=0,
+                max_value=20,
+                value=0,
+                step=1,
+                help="Remove the top performing countries from analysis"
+            )
+            st.caption(f"Currently excluding: {exclude_top_n} countries")
+        
+        # Get available countries (excluding top N if specified)
+        if exclude_top_n > 0:
+            excluded_countries = display_data.head(exclude_top_n)['Country'].tolist()
+            available_countries_for_pills = [c for c in display_data['Country'].tolist() 
+                                             if c not in excluded_countries and c != 'Unknown']
+            if excluded_countries:
+                st.caption(f"🚫 Excluded: {', '.join(excluded_countries[:3])}{'...' if len(excluded_countries) > 3 else ''}")
+        else:
+            available_countries_for_pills = [c for c in display_data['Country'].tolist() if c != 'Unknown']
+        
+        # Country selector pills
+        if len(available_countries_for_pills) > 12:
+            with st.popover("🌍 Select Countries"):
+                selected_countries_pills = st.pills(
+                    "Filter by Countries:",
+                    options=["All"] + available_countries_for_pills,
+                    selection_mode="multi",
+                    default=["All"],
+                    key="countries_pills_input"
+                )
+        else:
+            selected_countries_pills = st.pills(
+                "Filter by Countries:",
+                options=["All"] + available_countries_for_pills,
+                selection_mode="multi",
+                default=["All"],
+                key="countries_pills_input"
+            )
+        
+        if "All" in selected_countries_pills and len(selected_countries_pills) > 1:
+            selected_countries_pills = [item for item in selected_countries_pills if item != "All"]
+        elif not selected_countries_pills:
+            selected_countries_pills = ["All"]
 
     with col_map2:
         fig_heatmap = px.choropleth(
@@ -935,34 +980,6 @@ else:
             )
         else:
             search_org = 'All'
-
-    available_countries_for_pills = get_unique_values(map_filtered_df, 'Country') if 'map_filtered_df' in locals() else get_unique_values(filtered_df, 'Country')
-    available_countries_for_pills = [country for country in available_countries_for_pills if country != 'Unknown']
-
-    col1_table, col2_table = st.columns([1, 2])
-    with search_col1:
-        if len(available_countries_for_pills) > 12:
-            with st.popover("🌍 Select Countries"):
-                selected_countries_pills = st.pills(
-                    "Filter by Countries:",
-                    options=["All"] + available_countries_for_pills,
-                    selection_mode="multi",
-                    default=["All"],
-                    key="countries_pills_input"
-                )
-        else:
-            selected_countries_pills = st.pills(
-                "Filter by Countries:",
-                options=["All"] + available_countries_for_pills,
-                selection_mode="multi",
-                default=["All"],
-                key="countries_pills_input"
-            )
-        
-        if "All" in selected_countries_pills and len(selected_countries_pills) > 1:
-            selected_countries_pills = [item for item in selected_countries_pills if item != "All"]
-        elif not selected_countries_pills:
-            selected_countries_pills = ["All"]
 
     display_type = search_col1.radio(
         "Display Type:",
