@@ -188,6 +188,18 @@ button.st-emotion-cache-b0zc2i.e1mwqyj910:hover {
     accent-color: #82C5E0 !important;
 }
 
+/* ==================== SLIDER STYLING ==================== */
+
+/* Slider thumb (the draggable circle) */
+[data-testid="stSlider"] [role="slider"] {
+    background-color: #82C5E0 !important;
+}
+
+/* Use accent-color for modern browsers */
+[data-testid="stSlider"] input[type="range"] {
+    accent-color: #82C5E0 !important;
+}
+
 button.st-emotion-cache-tx7mgd.e1mwqyj911,
 button.st-emotion-cache-tx7mgd.e1mwqyj911[kind="pillsActive"],
 .stPills button[kind="pillsActive"],
@@ -269,16 +281,6 @@ button[kind="pillsActive"][data-testid="stBaseButton-pillsActive"]:hover {
 
 </style>
 """, unsafe_allow_html=True)
-
-# Radio button CSS (add to your main CSS block)
-radio_css = '''
-<style>
-div[data-testid="stRadio"] input[type="radio"] {
-    accent-color: #82C5E0 !important;
-}
-</style>
-'''
-st.markdown(radio_css, unsafe_allow_html=True)
 
 st.sidebar.markdown("")
 
@@ -957,36 +959,6 @@ else:
             help="Adjust to see different groupings based on publications, citations, and region"
         )
         st.caption("ℹ️ Clusters will group similar organizations/authors based on output and impact")
-    
-    # MOVED OUTSIDE - Calculate percentage for gradient (2-10 range converted to 0-100%)
-    slider_percentage = ((n_clusters - 2) / (10 - 2)) * 100
-    
-    # Inject CSS for slider colors
-    slider_css = f'''
-    <style>
-    /* Slider track with gradient */
-    div.stSlider > div[data-baseweb="slider"] > div > div {{
-        background: linear-gradient(to right, 
-                                    #82C5E0 0%, 
-                                    #82C5E0 {slider_percentage}%, 
-                                    #E8E8E8 {slider_percentage}%, 
-                                    #E8E8E8 100%) !important;
-    }}
-    
-    /* Slider thumb (circle) */
-    div.stSlider > div[data-baseweb="slider"] > div > div > div[role="slider"] {{
-        background-color: #82C5E0 !important;
-        box-shadow: rgb(130 197 224 / 20%) 0px 0px 0px 0.2rem !important;
-    }}
-    
-    /* Slider value number */
-    div.stSlider > div[data-baseweb="slider"] > div > div > div > div {{
-        color: #262730 !important;
-    }}
-    </style>
-    '''
-    
-    st.markdown(slider_css, unsafe_allow_html=True)
         
     available_countries_for_pills = get_unique_values(map_filtered_df, 'Country') if 'map_filtered_df' in locals() else get_unique_values(filtered_df, 'Country')
     available_countries_for_pills = [country for country in available_countries_for_pills if country != 'Unknown']
