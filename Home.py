@@ -227,7 +227,6 @@ button[kind="pillsActive"][data-testid="stBaseButton-pillsActive"]:hover {
 
 [data-testid="stPopover"] {
     background-color: #FFFFFF !important;
-    border: 1px solid #D3D3D3 !important;
 }
 
 .plotly {
