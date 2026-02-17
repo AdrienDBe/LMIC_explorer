@@ -222,6 +222,22 @@ button[kind="pillsActive"][data-testid="stBaseButton-pillsActive"]:hover {
     padding-top: 0 !important;
 }
 
+/* Reduce expander content padding */
+[data-testid="stExpander"] [data-testid="stExpanderDetails"] {
+    padding-top: 0 !important;
+}
+
+/* Remove extra space in plotly container */
+[data-testid="stPlotlyChart"] {
+    margin-top: -1rem !important;
+    margin-bottom: -1rem !important;
+}
+
+/* Tighten markdown spacing before chart */
+[data-testid="stExpander"] .stMarkdown {
+    margin-bottom: 0.25rem !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -956,13 +972,17 @@ else:
             
             fig_scatter.update_layout(
             height=max(800, min(len(plot_data) * 20, 4000)),  # Cap at 4000px, 20px per row
-            margin=dict(l=200, r=50, t=0, b=50),  # t=0 for no top margin
+            margin=dict(l=200, r=20, t=5, b=30),  # t=0 for no top margin
             xaxis_title="Average Citations per Publication",
             yaxis_title=None,
             showlegend=False,
             plot_bgcolor='white',
             paper_bgcolor='white'
             )
+
+            # Add tighter axis ranges to eliminate padding
+            fig_scatter.update_xaxes(automargin=True)
+            fig_scatter.update_yaxes(automargin=True)
             
             fig_scatter.update_traces(
                 marker=dict(
