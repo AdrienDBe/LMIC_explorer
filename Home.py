@@ -957,36 +957,36 @@ else:
             help="Adjust to see different groupings based on publications, citations, and region"
         )
         st.caption("ℹ️ Clusters will group similar organizations/authors based on output and impact")
-        
-        # Calculate percentage for gradient (2-10 range converted to 0-100%)
-        slider_percentage = ((n_clusters - 2) / (10 - 2)) * 100
-        
-        # Inject CSS for slider colors
-        slider_css = f'''
-        <style>
-        /* Slider track with gradient */
-        div.stSlider > div[data-baseweb="slider"] > div > div {{
-            background: linear-gradient(to right, 
-                                        #82C5E0 0%, 
-                                        #82C5E0 {slider_percentage}%, 
-                                        #E8E8E8 {slider_percentage}%, 
-                                        #E8E8E8 100%);
-        }}
-        
-        /* Slider thumb (circle) */
-        div.stSlider > div[data-baseweb="slider"] > div > div > div[role="slider"] {{
-            background-color: #82C5E0;
-            box-shadow: rgb(130 197 224 / 20%) 0px 0px 0px 0.2rem;
-        }}
-        
-        /* Slider value number */
-        div.stSlider > div[data-baseweb="slider"] > div > div > div > div {{
-            color: #262730;
-        }}
-        </style>
-        '''
-        
-        st.markdown(slider_css, unsafe_allow_html=True)
+    
+    # MOVED OUTSIDE - Calculate percentage for gradient (2-10 range converted to 0-100%)
+    slider_percentage = ((n_clusters - 2) / (10 - 2)) * 100
+    
+    # Inject CSS for slider colors
+    slider_css = f'''
+    <style>
+    /* Slider track with gradient */
+    div.stSlider > div[data-baseweb="slider"] > div > div {{
+        background: linear-gradient(to right, 
+                                    #82C5E0 0%, 
+                                    #82C5E0 {slider_percentage}%, 
+                                    #E8E8E8 {slider_percentage}%, 
+                                    #E8E8E8 100%) !important;
+    }}
+    
+    /* Slider thumb (circle) */
+    div.stSlider > div[data-baseweb="slider"] > div > div > div[role="slider"] {{
+        background-color: #82C5E0 !important;
+        box-shadow: rgb(130 197 224 / 20%) 0px 0px 0px 0.2rem !important;
+    }}
+    
+    /* Slider value number */
+    div.stSlider > div[data-baseweb="slider"] > div > div > div > div {{
+        color: #262730 !important;
+    }}
+    </style>
+    '''
+    
+    st.markdown(slider_css, unsafe_allow_html=True)
         
     available_countries_for_pills = get_unique_values(map_filtered_df, 'Country') if 'map_filtered_df' in locals() else get_unique_values(filtered_df, 'Country')
     available_countries_for_pills = [country for country in available_countries_for_pills if country != 'Unknown']
