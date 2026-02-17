@@ -726,6 +726,8 @@ else:
 # --- SIDEBAR FILTERS ---
 
 st.sidebar.markdown("### LMIC Explorer")
+st.info("Researchers with 3+ publications; 3204 Immunology (Fields of Research ANZSRC 2020)")
+
 
 # Filter by Income Category (renamed from "Narrow Income level")
 selected_income_raw = st.sidebar.pills(
@@ -1013,6 +1015,7 @@ with search_col1:
         "Display Type:",
         options=["Organizations","Authors"],
         index=0,
+        horizontal=True,
         key="display_type_radio"
     )
 
