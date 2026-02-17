@@ -270,8 +270,6 @@ button[kind="pillsActive"][data-testid="stBaseButton-pillsActive"]:hover {
 </style>
 """, unsafe_allow_html=True)
 
-st.sidebar.markdown("")
-
 # --- CACHING FUNCTIONS ---
 
 @st.cache_data
@@ -724,10 +722,6 @@ if 'Country' in df.columns:
     available_countries_for_pills_initial = sorted([c for c in temp_country_counts['Country'].tolist() if c != 'Unknown'])
 else:
     available_countries_for_pills_initial = []
-
-# --- SIDEBAR FILTERS ---
-
-st.sidebar.markdown("### LMIC Explorer")
 
 # --- SIDEBAR FILTERS ---
 
