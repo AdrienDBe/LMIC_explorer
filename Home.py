@@ -519,12 +519,12 @@ def process_grouped_data(search_results, display_type):
         st.error(f"Traceback: {traceback.format_exc()}")
         return pd.DataFrame(), []
 
-def add_clustering(grouped_data, display_type):
+def add_clustering(grouped_data, display_type, n_clusters=3):
     """Add clustering based on Region, Publications, and Citations Mean"""
     try:
         df = grouped_data.copy()
         
-        if len(df) < 3:  # Need at least 3 points for clustering
+        if len(df) < n_clusters:  # Need enough points for clustering
             df['Suggested Cluster'] = 'Single Group'
             return df
         
@@ -898,8 +898,6 @@ else:
 
     with search_col1:
         search_term = st.text_input("Search by name or organization:", placeholder="Enter search term...")
-
-    with search_col2:
         if 'Organization' in filtered_df.columns:
             available_orgs = get_unique_values(filtered_df, 'Organization')
             search_org = st.selectbox(
@@ -909,6 +907,20 @@ else:
             )
         else:
             search_org = 'All'
+
+    with search_col2:
+        # Number of clusters slider (will be applied after data processing)
+        st.markdown("**Clustering Controls:**")
+        n_clusters = st.slider(
+            "Number of Clusters:",
+            min_value=2,
+            max_value=10,
+            value=5,
+            step=1,
+            key="n_clusters_slider",
+            help="Adjust to see different groupings based on publications, citations, and region"
+        )
+        st.caption("ℹ️ Clusters will group similar organizations/authors based on output and impact")
         
     available_countries_for_pills = get_unique_values(map_filtered_df, 'Country') if 'map_filtered_df' in locals() else get_unique_values(filtered_df, 'Country')
     available_countries_for_pills = [country for country in available_countries_for_pills if country != 'Unknown']
@@ -953,12 +965,62 @@ else:
     # Process grouped data
     grouped_data, display_cols = process_grouped_data(search_results, display_type)
     
-    # Add clustering
+    # Add clustering with user-selected number of clusters
     if len(grouped_data) > 0:
-        grouped_data = add_clustering(grouped_data, display_type)
+        # Adjust max clusters based on data size
+        max_possible_clusters = min(10, max(2, len(grouped_data) // 10))
+        effective_n_clusters = min(n_clusters, max_possible_clusters)
+        
+        grouped_data = add_clustering(grouped_data, display_type, n_clusters=effective_n_clusters)
+        
         # Add cluster column to display
         if 'Suggested Cluster' in grouped_data.columns:
             display_cols = display_cols + ['Suggested Cluster']
+            
+            # Show cluster summary table
+            st.markdown("#### 📊 Cluster Summary")
+            
+            if display_type == "Organizations":
+                cluster_summary = grouped_data.groupby('Suggested Cluster').agg({
+                    'Organization': 'count',
+                    'Authors': 'sum',
+                    'Publications': 'sum',
+                    'Citations Mean': 'mean'
+                }).reset_index()
+                
+                cluster_summary.columns = ['Cluster', 'Number of Organizations', 'Total Authors', 'Total Publications', 'Avg Citations per Publication']
+                
+            else:  # Authors
+                cluster_summary = grouped_data.groupby('Suggested Cluster').agg({
+                    'Name': 'count',
+                    'Publications': 'sum',
+                    'Citations Mean': 'mean'
+                }).reset_index()
+                
+                cluster_summary.columns = ['Cluster', 'Number of Authors', 'Total Publications', 'Avg Citations per Publication']
+            
+            # Round and format
+            cluster_summary['Avg Citations per Publication'] = cluster_summary['Avg Citations per Publication'].round(2)
+            
+            # Sort by Total Publications descending
+            cluster_summary = cluster_summary.sort_values('Total Publications', ascending=False)
+            
+            # Display as a nice table
+            st.dataframe(
+                cluster_summary,
+                hide_index=True,
+                use_container_width=True,
+                column_config={
+                    'Cluster': st.column_config.TextColumn('Cluster', width="large"),
+                    'Number of Organizations': st.column_config.NumberColumn('# Organizations', format="%d"),
+                    'Number of Authors': st.column_config.NumberColumn('# Authors', format="%d"),
+                    'Total Authors': st.column_config.NumberColumn('Total Authors', format="%d"),
+                    'Total Publications': st.column_config.NumberColumn('Total Publications', format="%d"),
+                    'Avg Citations per Publication': st.column_config.NumberColumn('Avg Citations/Pub', format="%.2f")
+                }
+            )
+            
+            st.markdown("---")
 
     with st.expander("View Detailed Table", expanded=False):
         if len(grouped_data) > 0:
