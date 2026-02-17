@@ -1,111 +1,373 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.io as pio
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import numpy as np
 import os
 import requests
+from functools import lru_cache
 import time
 import gc
+import sys
 import tracemalloc
 
+# Start memory tracking
 tracemalloc.start()
 
 def get_memory_usage():
+    """Get current memory usage"""
     current, peak = tracemalloc.get_traced_memory()
     return current / 1024**2, peak / 1024**2
+
+def log_memory(label=""):
+    """Log memory usage"""
+    current, peak = get_memory_usage()
+    print(f"[MEMORY {label}] Current: {current:.1f}MB, Peak: {peak:.1f}MB")
+    return current, peak
+
+# Monitor rerun count
+if 'rerun_count' not in st.session_state:
+    st.session_state.rerun_count = 0
+    st.session_state.last_rerun_time = time.time()
+else:
+    st.session_state.rerun_count += 1
+    current_time = time.time()
+    if 'last_rerun_time' in st.session_state:
+        time_since_last = current_time - st.session_state.last_rerun_time
+        if time_since_last < 0.1 and st.session_state.rerun_count > 5:
+            st.error(f"⚠️ Detected rapid rerun loop. Pausing...")
+            time.sleep(0.5)
+            gc.collect()
+    st.session_state.last_rerun_time = current_time
+
+# Force cleanup every 2 reruns
+if st.session_state.rerun_count % 2 == 0:
+    gc.collect()
+
+# Emergency stop if too many reruns
+if st.session_state.rerun_count > 50:
+    st.error("⚠️ Too many page reloads detected. Clearing cache...")
+    st.cache_data.clear()
+    st.cache_resource.clear()
+    st.session_state.clear()
+    st.session_state.rerun_count = 0
+    st.stop()
 
 st.set_page_config(
     page_title="LMIC Explorer",
     layout="wide",
     initial_sidebar_state="expanded",
-    menu_items={'Get Help': None, 'Report a bug': None, 'About': None}
+    menu_items={
+        'Get Help': None,
+        'Report a bug': None,
+        'About': None
+    }
 )
 
 # Debug panel
 with st.sidebar.expander("🐛 Debug Info", expanded=False):
-    st.write(f"**Rerun count:** {st.session_state.get('rerun_count', 0)}")
+    st.write(f"**Rerun count:** {st.session_state.rerun_count}")
     current_mem, peak_mem = get_memory_usage()
     st.write(f"**Memory:** {current_mem:.1f}MB / {peak_mem:.1f}MB")
+    
+    if st.button("Force Garbage Collection"):
+        gc.collect()
+        st.rerun()
     
     if st.button("Clear Cache"):
         st.cache_data.clear()
         st.cache_resource.clear()
         gc.collect()
         st.rerun()
-
-# CSS
-st.markdown("""<style>
-html, body { background-color: #FFFFFF !important; color: #262730 !important; }
-[data-testid="stAppViewContainer"] { background-color: #FFFFFF !important; }
-[data-testid="stSidebar"] { background-color: #F0F2F6 !important; }
-</style>""", unsafe_allow_html=True)
-
-# Track reruns
-if 'rerun_count' not in st.session_state:
-    st.session_state.rerun_count = 0
-st.session_state.rerun_count += 1
-
-# Emergency stop
-if st.session_state.rerun_count > 100:
-    st.error("Too many reruns. Clearing...")
-    st.cache_data.clear()
-    st.session_state.clear()
-    st.stop()
-
-# --- LOAD DATA ---
-@st.cache_resource
-def load_data():
-    default_path = "data/combined_all_publications_data_Final.csv"
-    if not os.path.exists(default_path):
-        st.error("File not found")
-        st.stop()
     
-    df = pd.read_csv(default_path, low_memory=False)
-    df = df.drop_duplicates(subset=['Name', 'Organization', 'Country', 'Publications'])
-    df = df[df['Country'] != '']
-    
-    # World Bank data
+    if st.button("Reset App"):
+        st.session_state.clear()
+        st.rerun()
+
+st.markdown("""
+<style>
+html, body {
+    background-color: #FFFFFF !important;
+    color: #262730 !important;
+}
+
+[data-testid="stAppViewContainer"] {
+    background-color: #FFFFFF !important;
+}
+
+[data-testid="stSidebar"] {
+    background-color: #F0F2F6 !important;
+}
+
+[data-testid="stSidebarContent"] {
+    background-color: #F0F2F6 !important;
+}
+
+div.stMain {
+    background-color: #FFFFFF !important;
+    padding: 1rem !important;
+}
+
+div.block-container {
+    background-color: #FFFFFF !important;
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+}
+
+[data-testid="stAppViewContainer"] {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+[data-testid="stAppViewContainer"] > * {
+    margin-top: 0 !important;
+}
+
+[data-testid="stRadio"],
+[data-testid="stPills"] {
+    margin-top: 0.5rem !important;
+    padding-top: 0.5rem !important;
+}
+
+[data-testid="stHeader"] {
+    visibility: visible !important;
+    display: block !important;
+    margin-bottom: 1rem !important;
+}
+
+div[data-testid="stToolbar"] {
+    visibility: visible !important;
+}
+
+p, span, label, div {
+    color: #262730 !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: #262730 !important;
+}
+
+.stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
+    color: #262730 !important;
+}
+
+.stPills button {
+    padding: 0.5rem 1rem !important;
+    border-radius: 20px !important;
+    transition: all 0.2s ease !important;
+    font-weight: 500 !important;
+}
+
+.stPills button[kind="pills"],
+button.st-emotion-cache-b0zc2i.e1mwqyj910 {
+    background-color: #F0F0F0 !important;
+    color: #262730 !important;
+    border: 1px solid #D3D3D3 !important;
+}
+
+.stPills button[kind="pills"]:hover,
+button.st-emotion-cache-b0zc2i.e1mwqyj910:hover {
+    background-color: #E8E8E8 !important;
+    color: #262730 !important;
+    border: 1px solid #B0B0B0 !important;
+}
+
+button.st-emotion-cache-tx7mgd.e1mwqyj911,
+button.st-emotion-cache-tx7mgd.e1mwqyj911[kind="pillsActive"],
+.stPills button[kind="pillsActive"],
+button[kind="pillsActive"][data-testid="stBaseButton-pillsActive"] {
+    background-color: #82C5E0 !important;
+    color: #FFFFFF !important;
+    border: 1px solid #82C5E0 !important;
+    font-weight: 600 !important;
+}
+
+button.st-emotion-cache-tx7mgd.e1mwqyj911:hover,
+.stPills button[kind="pillsActive"]:hover,
+button[kind="pillsActive"][data-testid="stBaseButton-pillsActive"]:hover {
+    background-color: #6BADCC !important;
+    color: #FFFFFF !important;
+    border: 1px solid #6BADCC !important;
+}
+
+[data-testid="stExpander"] {
+    background-color: #FFFFFF !important;
+    border: 1px solid #D3D3D3 !important;
+}
+
+[data-testid="stExpander"] button {
+    color: #262730 !important;
+}
+
+[data-testid="stExpander"] summary {
+    color: #262730 !important;
+}
+
+[data-testid="stRadio"] label,
+[data-testid="stCheckbox"] label {
+    color: #262730 !important;
+}
+
+[data-testid="stPopover"] {
+    background-color: #FFFFFF !important;
+    border: 1px solid #D3D3D3 !important;
+}
+
+.plotly {
+    background-color: #FFFFFF !important;
+}
+
+.plotly .bg {
+    fill: #FFFFFF !important;
+}
+
+.plotly-notebooklogo {
+    display: none !important;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+st.sidebar.markdown("")
+
+# --- CACHING FUNCTIONS ---
+
+@st.cache_data(ttl=3600)
+def load_world_bank_metadata():
+    """Load World Bank metadata with caching"""
     try:
         url = "http://api.worldbank.org/v2/country?per_page=400&format=json"
         resp = requests.get(url, timeout=10)
         data = resp.json()
-        records = [{
-            "name": c["name"],
-            "region": c["region"]["value"],
-            "incomeLevel": c["incomeLevel"]["value"]
-        } for c in data[1]]
+        records = []
+        for c in data[1]:
+            records.append({
+                "iso2c": c["id"],
+                "name": c["name"],
+                "region": c["region"]["value"],
+                "incomeLevel": c["incomeLevel"]["value"]
+            })
         df_wb = pd.DataFrame(records)
         df_wb = df_wb[df_wb['region'] != 'Aggregates']
-        
-        df = df.merge(df_wb, left_on='Country', right_on='name', how='left')
-        df = df.rename(columns={'region': 'Region', 'incomeLevel': 'Income Level'})
-        df['Income Level'] = df['Income Level'].fillna('Low income')
-        if 'name' in df.columns:
-            df = df.drop('name', axis=1)
-    except:
-        pass
-    
-    return df
-
-df = load_data()
+        return df_wb
+    except Exception as e:
+        st.warning(f"Failed to load World Bank data: {e}")
+        return pd.DataFrame(columns=["iso2c", "name", "region", "incomeLevel"])
 
 @st.cache_data
-def get_unique_vals(col):
-    if col in df.columns:
-        return sorted([str(x) for x in df[col].dropna().unique()])
-    return []
-
-@st.cache_data
-def get_filter_options():
+def get_country_name_mapping():
+    """Return country name mapping as cached dictionary"""
     return {
-        'regions': ['All'] + get_unique_vals('Region'),
-        'pub_types': ['All'] + get_unique_vals('Publication type'),
-        'lmic_levels': ['Upper middle income', 'Lower middle income', 'Low income']
+        'Democratic Republic of the Congo': 'Congo, Dem. Rep.',
+        'Egypt': 'Egypt, Arab Rep.',
+        'Gambia': 'Gambia, The',
+        'Iran': 'Iran, Islamic Rep.',
+        'Ivory Coast': "Cote d'Ivoire",
+        'Kyrgyzstan': 'Kyrgyz Republic',
+        'Republic of the Congo': 'Congo, Rep.',
+        'Russia': 'Russian Federation',
+        'Saint Kitts and Nevis': 'St. Kitts and Nevis',
+        'Slovakia': 'Slovak Republic',
+        'South Korea': 'Korea, Rep.',
+        'Syria': 'Syrian Arab Republic',
+        'Taiwan': 'China',
+        'Turkey': 'Turkiye',
+        'Venezuela': 'Venezuela, RB',
+        'Vietnam': 'Viet Nam',
+        'Yemen': 'Yemen, Rep.',
+        'USA': 'United States',
+        'US': 'United States',
+        'UK': 'United Kingdom'
     }
 
 @st.cache_data
+def optimize_dataframe_memory(df):
+    """Optimize DataFrame memory usage"""
+    optimized_df = df.copy()
+    for col in optimized_df.columns:
+        if optimized_df[col].dtype == 'object':
+            unique_ratio = len(optimized_df[col].unique()) / len(optimized_df)
+            if unique_ratio < 0.5:
+                optimized_df[col] = optimized_df[col].astype('category')
+    return optimized_df
+
+@st.cache_data
+def load_and_preprocess_data(filepath):
+    """Load the combined publications CSV file with preprocessing"""
+    try:
+        dtype_dict = {
+            'Name': 'string',
+            'Organization': 'string',
+            'Country': 'string',
+            'Publication type': 'string',
+            'Open Access': 'string'
+        }
+        
+        df = pd.read_csv(filepath, low_memory=False, dtype=dtype_dict)
+        
+        initial_rows = len(df)
+        df = df.drop_duplicates(subset=['Name', 'Organization', 'Country', 'Publications'])
+        df = df[df['Country'] != '']
+        rows_removed = initial_rows - len(df)
+        if rows_removed > 0:
+            print(f"Removed {rows_removed} duplicate rows during preprocessing")
+        
+        country_name_mapping = get_country_name_mapping()
+        wb_countries = load_world_bank_metadata()
+        
+        if 'Country' in df.columns:
+            df['Country'] = df['Country'].map(
+                lambda x: country_name_mapping.get(x, x) if pd.notna(x) else x
+            )
+        
+        if not wb_countries.empty and 'Country' in df.columns:
+            df = df.merge(
+                wb_countries[['name', 'region', 'incomeLevel']], 
+                left_on='Country', 
+                right_on='name', 
+                how='left'
+            )
+            df = df.rename(columns={
+                'region': 'Region',
+                'incomeLevel': 'Income Level'
+            })
+            df['Income Level'] = df['Income Level'].replace('Not classified', 'Low income')
+            if 'name' in df.columns:
+                df = df.drop('name', axis=1)
+        
+        numeric_columns = ['Publications', 'Citations', 'Citations Mean']
+        for col in numeric_columns:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+        
+        text_columns = ['Name', 'Organization', 'Publication type', 'Open Access']
+        for col in text_columns:
+            if col in df.columns:
+                df[col] = df[col].fillna('Unknown').astype(str).str.strip()
+        
+        if 'Country' in df.columns:
+            df['Country'] = df['Country'].fillna('Unknown').astype(str).str.strip()
+            df['Country'] = df['Country'].replace('', 'Unknown')
+        
+        df = optimize_dataframe_memory(df)
+        return df, country_name_mapping
+        
+    except Exception as e:
+        st.error(f"Error loading data: {str(e)}")
+        return None, {}
+
+@st.cache_data
+def get_unique_values(df, column):
+    """Get unique values for a column with caching"""
+    if column in df.columns:
+        return sorted(df[column].dropna().unique().tolist())
+    return []
+
+@st.cache_data
 def get_regional_hub_countries():
+    """Return regional hub country mappings"""
     return {
         "A*STAR SIgN": ["Singapore", "Indonesia", "Philippines", "Viet Nam", "Thailand", "Malaysia"],
         "Institut Pasteur Network": ["Algeria", "Argentina", "Brazil", "Cambodia", "Cameroon", "Central African Republic", 
@@ -118,6 +380,7 @@ def get_regional_hub_countries():
 
 @st.cache_data
 def get_country_coordinates():
+    """Return approximate coordinates for countries (centroids)"""
     return {
         "Singapore": {"lat": 1.3521, "lon": 103.8198},
         "Indonesia": {"lat": -0.7893, "lon": 113.9213},
@@ -167,106 +430,397 @@ def get_country_coordinates():
         "Zambia": {"lat": -13.1339, "lon": 27.8493},
         "Zimbabwe": {"lat": -19.0154, "lon": 29.1549}
     }
+    
+def filter_data_by_selections(df, income_category, selected_income, selected_region, selected_pub_type, selected_oa):
+    """Apply filters to dataframe - NO CACHING"""
+    filtered_df = df.copy()
 
-filter_opts = get_filter_options()
+    if 'All' not in selected_oa and selected_oa:
+        filtered_df = filtered_df[filtered_df['Open Access'].isin(selected_oa)]
+
+    if 'All' not in selected_pub_type and selected_pub_type:
+        filtered_df = filtered_df[filtered_df['Publication type'].isin(selected_pub_type)]
+
+    if 'All' not in selected_region and selected_region and 'Region' in df.columns:
+        filtered_df = filtered_df[filtered_df['Region'].isin(selected_region)]
+
+    if income_category == "LMIC" and selected_income and 'Income Level' in df.columns:
+        filtered_df = filtered_df[filtered_df['Income Level'].isin(selected_income)]
+
+    return filtered_df
+
+def calculate_map_data(df, map_display_type, regional_hubs):
+    """Calculate country counts for map display - NO CACHING"""
+    map_filtered_df = df.copy()
+    
+    if "All" not in regional_hubs and regional_hubs:
+        hub_countries = get_regional_hub_countries()
+        selected_countries = []
+        for hub in regional_hubs:
+            if hub in hub_countries:
+                selected_countries.extend(hub_countries[hub])
+        
+        if selected_countries:
+            map_filtered_df = df[df['Country'].isin(selected_countries)].copy()
+
+    if map_display_type == "Publications":
+        country_counts = map_filtered_df.groupby('Country')['Publications'].sum().reset_index()
+        country_counts.columns = ['Country', 'Count']
+        display_label = "Publications"
+    elif map_display_type == "Authors":
+        country_counts = map_filtered_df.groupby('Country')['Name'].nunique().reset_index()
+        country_counts.columns = ['Country', 'Count']
+        display_label = "Authors"
+    else:
+        country_counts = map_filtered_df.groupby('Country')['Organization'].nunique().reset_index()
+        country_counts.columns = ['Country', 'Count']
+        display_label = "Organizations"
+    
+    country_counts = country_counts[country_counts['Country'] != 'Unknown']
+    country_counts = country_counts[country_counts['Count'] > 0]
+    country_counts = country_counts.sort_values('Count', ascending=False)
+    
+    return country_counts, display_label, map_filtered_df
+
+def calculate_search_results(df, search_term, search_org, selected_countries_pills, regional_hubs):
+    """Calculate search results - NO CACHING"""
+    search_results = df.copy()
+    
+    if "All" not in regional_hubs and regional_hubs:
+        hub_countries = get_regional_hub_countries()
+        selected_countries = []
+        for hub in regional_hubs:
+            if hub in hub_countries:
+                selected_countries.extend(hub_countries[hub])
+        
+        if selected_countries:
+            search_results = search_results[search_results['Country'].isin(selected_countries)]
+
+    if "All" not in selected_countries_pills and selected_countries_pills:
+        search_results = search_results[search_results['Country'].isin(selected_countries_pills)]
+
+    if search_term:
+        search_results = search_results[
+            (search_results['Name'].str.contains(search_term, case=False, na=False)) |
+            (search_results['Organization'].str.contains(search_term, case=False, na=False))
+        ]
+
+    if search_org != 'All':
+        search_results = search_results[search_results['Organization'] == search_org]
+    
+    return search_results
+    
+def process_grouped_data(search_results, display_type):
+    """Process grouped data - NO CACHING"""
+    try:
+        df = search_results.copy()
+        
+        required_cols = ['Name', 'Organization', 'Country', 'Publications', 'Citations']
+        missing_cols = [col for col in required_cols if col not in df.columns]
+        if missing_cols:
+            st.error(f"Missing required columns: {missing_cols}")
+            return pd.DataFrame(), []
+        
+        for col in ['Name', 'Organization', 'Country']:
+            if col in df.columns:
+                if df[col].dtype.name == 'category':
+                    df[col] = df[col].astype(str)
+        
+        df = df[df['Name'].notna()]
+        df = df[df['Organization'].notna()]
+        df = df[df['Country'].notna()]
+        df = df[df['Name'] != 'Unknown']
+        df = df[df['Organization'] != 'Unknown']
+        df = df[df['Country'] != 'Unknown']
+        
+        df['Publications'] = pd.to_numeric(df['Publications'], errors='coerce').fillna(0)
+        df['Citations'] = pd.to_numeric(df['Citations'], errors='coerce').fillna(0)
+        
+        df = df[df['Publications'] > 0]
+        
+        if len(df) == 0:
+            return pd.DataFrame(), []
+        
+        if display_type == "Authors":
+            grouped_data = df.groupby(
+                ['Name', 'Organization', 'Country'],
+                as_index=False
+            ).agg({
+                'Publications': 'sum',
+                'Citations': 'sum'
+            })
+            
+            grouped_data['Citations Mean'] = (
+                grouped_data['Citations'] / grouped_data['Publications']
+            ).round(2)
+            
+            display_cols = ['Name', 'Organization', 'Country', 'Publications', 'Citations', 'Citations Mean']
+            
+        else:
+            grouped_data = df.groupby(
+                ['Organization', 'Country'],
+                as_index=False
+            ).agg({
+                'Publications': 'sum',
+                'Citations': 'sum',
+                'Name': 'nunique'
+            })
+            
+            grouped_data = grouped_data.rename(columns={'Name': 'Authors'})
+            
+            grouped_data['Citations Mean'] = (
+                grouped_data['Citations'] / grouped_data['Publications']
+            ).round(2)
+            
+            display_cols = ['Organization', 'Country', 'Authors', 'Publications', 'Citations', 'Citations Mean']
+
+        grouped_data = grouped_data.sort_values('Publications', ascending=False)
+        grouped_data = grouped_data.reset_index(drop=True)
+        grouped_data = grouped_data.fillna(0)
+
+        return grouped_data, display_cols
+        
+    except Exception as e:
+        st.error(f"Error in process_grouped_data: {str(e)}")
+        return pd.DataFrame(), []
+        
+def handle_all_selection(current_selection_tuple, all_options_tuple):
+    """Handle 'All' selection logic"""
+    current_selection = list(current_selection_tuple)
+    all_options = list(all_options_tuple)
+    
+    if current_selection == ['All'] or (not current_selection):
+        return ['All']
+    
+    if 'All' in current_selection and len(current_selection) > 1:
+        return [item for item in current_selection if item != 'All']
+    
+    non_all_options = [opt for opt in all_options if opt != 'All']
+    if len(current_selection) == len(non_all_options) and all(item in non_all_options for item in current_selection):
+        return ['All']
+    
+    return current_selection
+
+# --- INITIALIZE APP ---
+
+@st.cache_resource
+def initialize_app():
+    """Initialize app with progress tracking"""
+    progress_bar = st.progress(0)
+    status_text = st.empty()
+    
+    default_path = "data/combined_all_publications_data_Final.csv"
+    
+    status_text.text("Loading data...")
+    progress_bar.progress(25)
+    
+    try:
+        if os.path.exists(default_path):
+            df, country_name_mapping = load_and_preprocess_data(default_path)
+            data_path = default_path
+        else:
+            st.error(f"❌ File not found at {default_path}")
+            st.stop()
+    except Exception as e:
+        st.error(f"❌ Error loading data: {str(e)}")
+        st.stop()
+    
+    progress_bar.progress(75)
+    status_text.text("Processing data...")
+    
+    if df is None or df.empty:
+        st.error("❌ No data loaded.")
+        st.stop()
+    
+    progress_bar.progress(100)
+    status_text.text("✅ Data loaded successfully!")
+    time.sleep(0.5)
+    
+    progress_bar.empty()
+    status_text.empty()
+    
+    return df, country_name_mapping, data_path
+
+df, country_name_mapping, data_path = initialize_app()
+
+@st.cache_data
+def get_filter_options(df):
+    """Get all filter options"""
+    options = {}
+    
+    if 'Region' in df.columns:
+        options['regions'] = ['All'] + get_unique_values(df, 'Region')
+    else:
+        options['regions'] = ['All']
+    
+    if 'Publication type' in df.columns:
+        options['pub_types'] = ['All'] + get_unique_values(df, 'Publication type')
+    else:
+        options['pub_types'] = ['All']
+    
+    if 'Open Access' in df.columns:
+        options['oa_types'] = ['All'] + get_unique_values(df, 'Open Access')
+    else:
+        options['oa_types'] = ['All']
+    
+    if 'Income Level' in df.columns:
+        lmic_income_levels = ['Upper middle income', 'Lower middle income', 'Low income']
+        options['lmic_levels'] = [level for level in lmic_income_levels 
+                                 if level in df['Income Level'].dropna().unique()]
+    else:
+        options['lmic_levels'] = []
+    
+    return options
+
+filter_options = get_filter_options(df)
+
+# === INITIALIZE FILTER STATE IN SESSION ===
+if 'income_category' not in st.session_state:
+    st.session_state.income_category = "All regions"
+
+if 'selected_income' not in st.session_state:
+    st.session_state.selected_income = ['All']
+
+if 'selected_region' not in st.session_state:
+    st.session_state.selected_region = ['All']
+
+if 'regional_hubs' not in st.session_state:
+    st.session_state.regional_hubs = ['All']
+
+if 'selected_pub_type' not in st.session_state:
+    st.session_state.selected_pub_type = ['All']
 
 # --- SIDEBAR FILTERS ---
+
 st.sidebar.markdown("### Filters")
 
-income_cat = st.sidebar.radio("Income Category:", ["All regions", "LMIC"], index=0)
+# Income Category
+income_category = st.sidebar.pills(
+    "Filter by Income Category:",
+    ["All regions", "LMIC"],
+    selection_mode="single",
+    key="income_category_input"
+)
+st.session_state.income_category = income_category
 
-if income_cat == "LMIC":
-    sel_income = st.sidebar.multiselect("Income level:", filter_opts['lmic_levels'], default=filter_opts['lmic_levels'])
+# Income Level (if LMIC selected)
+if income_category == "LMIC" and filter_options['lmic_levels']:
+    selected_income = st.sidebar.pills(
+        "Narrow Income level:",
+        filter_options['lmic_levels'],
+        selection_mode="multi",
+        key="income_level_input"
+    )
+    if not selected_income:
+        selected_income = filter_options['lmic_levels']
+    st.session_state.selected_income = selected_income
 else:
-    sel_income = ['All']
+    selected_income = ['All']
+    st.session_state.selected_income = selected_income
 
 st.sidebar.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
 
-sel_region = st.sidebar.multiselect("Region:", filter_opts['regions'], default=['All'])
-if "All" in sel_region and len(sel_region) > 1:
-    sel_region = [x for x in sel_region if x != "All"]
-elif not sel_region:
-    sel_region = ['All']
+# Region
+selected_region_raw = st.sidebar.pills(
+    "Filter by Region:",
+    filter_options['regions'],
+    selection_mode="multi",
+    key="region_input"
+)
+selected_region = handle_all_selection(
+    tuple(selected_region_raw) if selected_region_raw else ('All',),
+    tuple(filter_options['regions'])
+)
+st.session_state.selected_region = selected_region
 
 st.sidebar.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
 
-hubs_raw = st.sidebar.multiselect("Regional Hub:", 
-    ["All", "A*STAR SIgN", "Institut Pasteur Network", "KEMRI-Wellcome", "AHRI"],
-    default=["All"])
-regional_hubs = hubs_raw if "All" in hubs_raw else (hubs_raw if hubs_raw else ["All"])
-if "All" in regional_hubs and len(regional_hubs) > 1:
-    regional_hubs = [x for x in regional_hubs if x != "All"]
+# Regional Hubs
+regional_hubs_raw = st.sidebar.pills(
+    "Regional Excellence Hub:",
+    options=["All", "A*STAR SIgN", "Institut Pasteur Network", "KEMRI-Wellcome", "AHRI"],
+    selection_mode="multi",
+    key="regional_hubs_input"
+)
+
+if "All" in regional_hubs_raw and len(regional_hubs_raw) > 1:
+    regional_hubs = [item for item in regional_hubs_raw if item != "All"]
+elif not regional_hubs_raw:
+    regional_hubs = ["All"]
+else:
+    regional_hubs = regional_hubs_raw
+
+st.session_state.regional_hubs = regional_hubs
 
 st.sidebar.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
 
-sel_pub_type = st.sidebar.multiselect("Publication Type:", filter_opts['pub_types'], default=['All'])
-if "All" in sel_pub_type and len(sel_pub_type) > 1:
-    sel_pub_type = [x for x in sel_pub_type if x != "All"]
-elif not sel_pub_type:
-    sel_pub_type = ['All']
+# Publication Type
+selected_pub_type_raw = st.sidebar.pills(
+    "Publication Type:",
+    filter_options['pub_types'],
+    selection_mode="multi",
+    key="pub_type_input"
+)
+selected_pub_type = handle_all_selection(
+    tuple(selected_pub_type_raw) if selected_pub_type_raw else ('All',),
+    tuple(filter_options['pub_types'])
+)
+st.session_state.selected_pub_type = selected_pub_type
 
-# --- FILTER DATA ---
-def apply_filters():
-    filtered = df.copy()
-    
-    if 'All' not in sel_pub_type and sel_pub_type:
-        filtered = filtered[filtered['Publication type'].isin(sel_pub_type)]
-    
-    if 'All' not in sel_region and sel_region and 'Region' in df.columns:
-        filtered = filtered[filtered['Region'].isin(sel_region)]
-    
-    if income_cat == "LMIC" and sel_income and 'Income Level' in df.columns:
-        filtered = filtered[filtered['Income Level'].isin(sel_income)]
-    
-    return filtered
+# === APPLY FILTERS ===
+filtered_df = filter_data_by_selections(
+    df, income_category, selected_income, selected_region, 
+    selected_pub_type, ['All']
+)
 
-filtered_df = apply_filters()
+log_memory("After filtering")
 
 # --- MAIN CONTENT ---
+
 if 'Country' not in filtered_df.columns:
-    st.error("No country data")
+    st.error("Country information not available in the data")
 else:
     col_map1, col_map2 = st.columns([1, 3])
-    
+
     with col_map1:
-        map_type = st.radio("Display:", ["Publications", "Authors", "Organizations"], index=1)
-        
-        # Calculate country counts
-        if map_type == "Publications":
-            country_counts = filtered_df.groupby('Country')['Publications'].sum().reset_index()
-            country_counts.columns = ['Country', 'Count']
-            display_label = "Publications"
-        elif map_type == "Authors":
-            country_counts = filtered_df.groupby('Country')['Name'].nunique().reset_index()
-            country_counts.columns = ['Country', 'Count']
-            display_label = "Authors"
-        else:
-            country_counts = filtered_df.groupby('Country')['Organization'].nunique().reset_index()
-            country_counts.columns = ['Country', 'Count']
-            display_label = "Organizations"
-        
-        country_counts = country_counts[country_counts['Country'] != 'Unknown']
-        country_counts = country_counts[country_counts['Count'] > 0]
-        country_counts = country_counts.sort_values('Count', ascending=False)
-        
-        st.markdown(f"Top 5 Countries (per {display_label}):")
-        st.dataframe(country_counts.head(5), hide_index=True, height=200)
+        map_display_type = st.radio(
+            "Display Type:",
+            options=["Publications", "Authors", "Organizations"],
+            index=1,
+            key="map_display_type_radio"
+        )
     
+        # Calculate map data
+        country_counts, display_label, map_filtered_df = calculate_map_data(
+            filtered_df, map_display_type, regional_hubs
+        )
+            
+        display_data = country_counts.copy()
+        display_data['Log_Count'] = np.log10(display_data['Count'] + 1)
+
+        st.markdown(f"Top 5 Countries (per {display_label}):")
+        st.dataframe(
+            display_data.head(5)[['Country', 'Count']],
+            hide_index=True,
+            height=200
+        )
+
     with col_map2:
-        country_counts['Log_Count'] = np.log10(country_counts['Count'] + 1)
-        
-        fig = px.choropleth(
-            country_counts,
+        fig_heatmap = px.choropleth(
+            display_data,
             locations='Country',
             locationmode='country names',
             color='Log_Count',
             hover_name='Country',
-            hover_data={'Count': ':,', 'Country': False, 'Log_Count': False},
+            hover_data={
+                'Count': ':,',
+                'Country': False,
+                'Log_Count': False
+            },
             color_continuous_scale=[[0, '#f0f8ff'], [0.5, '#82C5E0'], [1, '#4682b4']],
             labels={'Log_Count': f'{display_label} (log scale)'}
         )
         
-        # Add regional hub markers
         hub_countries = get_regional_hub_countries()
         country_coords = get_country_coordinates()
         hub_colors = {
@@ -276,130 +830,236 @@ else:
             "AHRI": "#4c956c"
         }
         
-        countries_with_data = set(country_counts['Country'].tolist())
+        countries_with_data = set(display_data['Country'].tolist())
+        
         hubs_to_show = list(hub_countries.keys()) if "All" in regional_hubs else regional_hubs
         
         for hub_name in hubs_to_show:
             if hub_name in hub_countries and hub_name in hub_colors:
                 covered_countries = hub_countries[hub_name]
-                countries_to_mark = [c for c in covered_countries if c in countries_with_data and c in country_coords]
+                countries_to_mark = [country for country in covered_countries 
+                                   if country in countries_with_data and country in country_coords]
                 
                 if countries_to_mark:
-                    lats = [country_coords[c]["lat"] for c in countries_to_mark]
-                    lons = [country_coords[c]["lon"] for c in countries_to_mark]
+                    lats = [country_coords[country]["lat"] for country in countries_to_mark]
+                    lons = [country_coords[country]["lon"] for country in countries_to_mark]
                     
-                    fig.add_trace(
+                    fig_heatmap.add_trace(
                         go.Scattergeo(
                             lon=lons,
                             lat=lats,
                             mode='markers',
-                            marker=dict(size=7, color=hub_colors[hub_name], symbol='diamond', 
-                                       line=dict(width=1, color='black'), opacity=0.8),
+                            marker=dict(
+                                size=7,
+                                color=hub_colors[hub_name],
+                                symbol='diamond',
+                                line=dict(width=1, color='black'),
+                                opacity=0.8
+                            ),
                             name=f"{hub_name} Coverage",
-                            hovertemplate="<b>%{text}</b><br>" + f"{hub_name}<br><extra></extra>",
+                            hovertemplate="<b>%{text}</b><br>" +
+                                        f"{hub_name} Coverage Area<br>" +
+                                        "<extra></extra>",
                             text=countries_to_mark,
                             showlegend=True
                         )
                     )
         
-        fig.update_geos(
-            showframe=False, showcoastlines=True, projection_type='natural earth',
-            showcountries=True, countrycolor='rgba(200, 200, 200, 0.5)',
-            coastlinecolor='rgba(200, 200, 200, 0.5)', fitbounds="locations"
+        fig_heatmap.update_geos(
+            showframe=False,
+            showcoastlines=True,
+            projection_type='natural earth',
+            showcountries=True,
+            countrycolor='rgba(200, 200, 200, 0.5)',
+            coastlinecolor='rgba(200, 200, 200, 0.5)',
+            showlakes=False,
+            fitbounds="locations",
+            visible=True
         )
         
-        fig.update_layout(
-            height=500, margin=dict(l=0, r=0, t=50, b=0),
-            coloraxis_colorbar=dict(title=f"{display_label}<br>(log scale)"),
-            legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01,
-                       bgcolor="rgba(255,255,255,0.8)", bordercolor="rgba(0,0,0,0.2)", borderwidth=1)
+        fig_heatmap.update_layout(
+            height=500,
+            margin=dict(l=0, r=0, t=50, b=0),
+            coloraxis_colorbar=dict(
+                title=f"{display_label}<br>(log scale)",
+                tickvals=[0, 1, 2, 3, 4],
+                ticktext=['1', '10', '100', '1K', '10K']
+            ),
+            legend=dict(
+                yanchor="top",
+                y=0.99,
+                xanchor="left",
+                x=0.01,
+                bgcolor="rgba(255,255,255,0.8)",
+                bordercolor="rgba(0,0,0,0.2)",
+                borderwidth=1
+            )
         )
-        st.plotly_chart(fig, use_container_width=True)
-        del fig
+        
+        st.plotly_chart(fig_heatmap, use_container_width=True)
+        del fig_heatmap
         gc.collect()
-    
-    st.markdown("<hr>", unsafe_allow_html=True)
-    
-    # Search section
-    col_s1, col_s2 = st.columns(2)
-    with col_s1:
-        search_term = st.text_input("Search:", placeholder="Name or organization...")
-    
-    with col_s2:
+
+        
+    st.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
+
+    # Search and display section
+    search_col1, search_col2 = st.columns(2)
+
+    with search_col1:
+        search_term = st.text_input("Search by name or organization:", placeholder="Enter search term...")
+
+    with search_col2:
         if 'Organization' in filtered_df.columns:
-            orgs = sorted([str(x) for x in filtered_df['Organization'].dropna().unique()])
-            search_org = st.selectbox("Organization:", ['All'] + orgs, index=0)
+            available_orgs = get_unique_values(filtered_df, 'Organization')
+            search_org = st.selectbox(
+                "Filter by Organization:",
+                options=['All'] + available_orgs[:100],
+                index=0
+            )
         else:
             search_org = 'All'
-    
-    # Search results
-    results = filtered_df.copy()
-    
-    if search_term:
-        results = results[
-            (results['Name'].str.contains(search_term, case=False, na=False)) |
-            (results['Organization'].str.contains(search_term, case=False, na=False))
-        ]
-    
-    if search_org != 'All':
-        results = results[results['Organization'] == search_org]
-    
-    display_type = st.radio("Show:", ["Organizations", "Authors"], index=0, horizontal=True)
-    
-    # Group results
-    if len(results) > 0:
-        if display_type == "Authors":
-            grouped = results.groupby(['Name', 'Organization', 'Country'], as_index=False).agg({
-                'Publications': 'sum',
-                'Citations': 'sum'
-            })
-            grouped['Citations Mean'] = (grouped['Citations'] / grouped['Publications']).round(2)
-            display_cols = ['Name', 'Organization', 'Country', 'Publications', 'Citations', 'Citations Mean']
+        
+    available_countries_for_pills = get_unique_values(map_filtered_df, 'Country') if 'map_filtered_df' in locals() else get_unique_values(filtered_df, 'Country')
+    available_countries_for_pills = [country for country in available_countries_for_pills if country != 'Unknown']
+
+    col1_table, col2_table = st.columns([1, 2])
+    with col2_table:
+        if len(available_countries_for_pills) > 12:
+            with st.popover("🌍 Select Countries"):
+                selected_countries_pills = st.pills(
+                    "Filter by Countries:",
+                    options=["All"] + available_countries_for_pills,
+                    selection_mode="multi",
+                    default=["All"],
+                    key="countries_pills_input"
+                )
         else:
-            grouped = results.groupby(['Organization', 'Country'], as_index=False).agg({
-                'Publications': 'sum',
-                'Citations': 'sum',
-                'Name': 'nunique'
-            })
-            grouped = grouped.rename(columns={'Name': 'Authors'})
-            grouped['Citations Mean'] = (grouped['Citations'] / grouped['Publications']).round(2)
-            display_cols = ['Organization', 'Country', 'Authors', 'Publications', 'Citations', 'Citations Mean']
-        
-        grouped = grouped.sort_values('Publications', ascending=False)
-        
-        with st.expander(f"View Detailed Results ({len(grouped)} {display_type.lower()} found)", expanded=False):
-            st.dataframe(grouped[display_cols], use_container_width=True, height=600)
-        
-        with st.expander("Visualize Publications and Citations Mean", expanded=False):
-            st.write(f"Showing top results visualization")
-            plot_data = grouped.copy().sort_values('Citations Mean', ascending=True)
-            
-            if display_type == "Organizations":
-                y_col = 'Organization'
-                title = 'Organizations: Publications (dot size) vs Citations Mean'
-            else:
-                y_col = 'Name'
-                title = 'Authors: Publications (dot size) vs Citations Mean'
-            
-            fig = px.scatter(
-                plot_data,
-                x='Citations Mean',
-                y=y_col,
-                size='Publications',
-                hover_data=['Publications', 'Citations', 'Citations Mean'],
-                size_max=30,
-                title=title
+            selected_countries_pills = st.pills(
+                "Filter by Countries:",
+                options=["All"] + available_countries_for_pills,
+                selection_mode="multi",
+                default=["All"],
+                key="countries_pills_input"
             )
-            fig.update_layout(
-                height=max(400, min(len(plot_data) * 20, 1000)),
+        
+        if "All" in selected_countries_pills and len(selected_countries_pills) > 1:
+            selected_countries_pills = [item for item in selected_countries_pills if item != "All"]
+        elif not selected_countries_pills:
+            selected_countries_pills = ["All"]
+
+    display_type = col1_table.radio(
+        "Display Type:",
+        options=["Organizations","Authors"],
+        index=0,
+        key="display_type_radio"
+    )
+
+    # Calculate search results
+    search_results = calculate_search_results(
+        filtered_df, search_term, search_org, selected_countries_pills, regional_hubs
+    )
+    
+    # Process grouped data
+    grouped_data, display_cols = process_grouped_data(search_results, display_type)
+
+    with st.expander("View Detailed Table", expanded=False):
+        if len(grouped_data) > 0:
+            result_count = len(grouped_data)
+            st.write(f"Found {result_count} {display_type.lower()} matching your criteria")
+            
+            display_results = grouped_data.copy()
+            
+            if display_type == "Authors":
+                display_results['Search'] = display_results.apply(
+                    lambda row: f"https://www.google.com/search?q={row['Name'].replace(' ', '+')}+{row['Organization'].replace(' ', '+')}",
+                    axis=1
+                )
+                available_display_cols = [col for col in display_cols + ['Search'] if col in display_results.columns]
+            else:
+                display_results['Search'] = display_results.apply(
+                    lambda row: f"https://www.google.com/search?q={row['Organization'].replace(' ', '+')}+{row['Country'].replace(' ', '+')}",
+                    axis=1
+                )
+                available_display_cols = [col for col in display_cols + ['Search'] if col in display_results.columns]
+            
+            dynamic_height = min(max(len(display_results) * 35 + 50, 200), 800)
+            
+            st.data_editor(
+                display_results[available_display_cols],
+                hide_index=True,
+                height=dynamic_height,
+                use_container_width=True,
+                disabled=True,
+                column_config={
+                    "Search": st.column_config.LinkColumn(
+                        "🔍",
+                        display_text="Google Search"
+                    )
+                }
+            )
+        else:
+            st.write(f"No {display_type.lower()} match your search criteria")
+
+    with st.expander("Visualize Publications and Citations Mean", expanded=False):
+        if len(grouped_data) > 0:
+            if display_type == "Organizations":
+                plot_data = grouped_data.copy()
+                plot_data = plot_data.sort_values('Citations Mean', ascending=True)
+
+                fig_scatter = px.scatter(
+                    plot_data,
+                    x='Citations Mean',
+                    y='Organization',
+                    size='Publications',
+                    hover_data={
+                        'Country': True,
+                        'Authors': True,
+                        'Publications': ':,',
+                        'Citations': ':,',
+                        'Citations Mean': ':.2f'
+                    },
+                    size_max=30,
+                    title=f'Organizations: Publications (dot size) vs Citations Mean',
+                )
+                
+            else:
+                plot_data = grouped_data.copy()
+                plot_data = plot_data.sort_values('Citations Mean', ascending=True)
+                
+                fig_scatter = px.scatter(
+                    plot_data,
+                    x='Citations Mean',
+                    y='Name',
+                    size='Publications',
+                    hover_data={
+                        'Organization': True,
+                        'Country': True,
+                        'Publications': ':,',
+                        'Citations': ':,',
+                        'Citations Mean': ':.2f'
+                    },
+                    size_max=30,
+                    title=f'Authors: Publications (dot size) vs Citations Mean',
+                )
+            
+            fig_scatter.update_layout(
+                height=max(400, len(plot_data) * 20),
                 margin=dict(l=200, r=50, t=50, b=50),
                 xaxis_title="Average Citations per Publication",
                 yaxis_title=None,
                 showlegend=False
             )
-            fig.update_traces(marker=dict(opacity=0.8, line=dict(width=1, color='white'), color='#82C5E0'))
-            st.plotly_chart(fig, use_container_width=True)
-            del fig
+            
+            fig_scatter.update_traces(
+                marker=dict(
+                    opacity=1,
+                    line=dict(width=1, color='white'),
+                    color='#82C5E0'
+                )
+            )
+            
+            st.plotly_chart(fig_scatter, use_container_width=True)
+            del fig_scatter
             gc.collect()
-    else:
-        st.info("No results found")
+            st.caption(f"💡 Dot size represents number of publications. Hover over dots for detailed information.")
