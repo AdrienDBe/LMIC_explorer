@@ -177,7 +177,7 @@ button[kind="pillsActive"][data-testid="stBaseButton-pillsActive"]:hover {
     border: 1px solid #6BADCC !important;
 }
 
-[data-testid="stExpander"] {
+[data-testid="st"] {
     background-color: #FFFFFF !important;
     border: 1px solid #D3D3D3 !important;
 }
@@ -900,6 +900,9 @@ else:
                 plot_data = plot_data.sort_values('Citations Mean', ascending=True)
                 
                 subtitle = f"Top {len(plot_data)} Organizations" if len(grouped_data) > MAX_DISPLAY else "All Organizations"
+                
+                # Show title as markdown (not in plotly)
+                st.markdown(f"**{subtitle}: Publications (dot size) vs Citations Mean**")
 
                 fig_scatter = px.scatter(
                     plot_data,
@@ -913,8 +916,7 @@ else:
                         'Citations': ':,',
                         'Citations Mean': ':.2f'
                     },
-                    size_max=30,
-                    title=f'{subtitle}: Publications (dot size) vs Citations Mean',
+                    size_max=30
                 )
                 
             else:  # Authors
@@ -923,6 +925,9 @@ else:
                 plot_data = plot_data.sort_values('Citations Mean', ascending=True)
                 
                 subtitle = f"Top {len(plot_data)} Authors" if len(grouped_data) > MAX_DISPLAY else "All Authors"
+                
+                # Show title as markdown (not in plotly)
+                st.markdown(f"**{subtitle}: Publications (dot size) vs Citations Mean**")
                 
                 fig_scatter = px.scatter(
                     plot_data,
@@ -936,13 +941,12 @@ else:
                         'Citations': ':,',
                         'Citations Mean': ':.2f'
                     },
-                    size_max=30,
-                    title=f'{subtitle}: Publications (dot size) vs Citations Mean',
+                    size_max=30
                 )
             
             fig_scatter.update_layout(
                 height=max(400, len(plot_data) * 20),
-                margin=dict(l=200, r=50, t=50, b=50),
+                margin=dict(l=200, r=50, t=10, b=50),  # Reduced top margin from 50 to 10
                 xaxis_title="Average Citations per Publication",
                 yaxis_title=None,
                 showlegend=False
