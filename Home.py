@@ -725,8 +725,6 @@ else:
 
 # --- SIDEBAR FILTERS ---
 st.sidebar.markdown("# LMIC Explorer")
-st.sidebar.info("Researchers with 3+ publications; 3204 Immunology (Fields of Research ANZSRC 2020)")
-
 
 # Filter by Income Category (renamed from "Narrow Income level")
 selected_income_raw = st.sidebar.pills(
@@ -817,6 +815,8 @@ selected_pub_type = handle_all_selection(
     tuple(filter_options['pub_types'])
 )
 st.session_state.selected_pub_type = selected_pub_type
+
+st.sidebar.info("Researchers with 3+ publications; 3204 Immunology (Fields of Research ANZSRC 2020)")
 
 # === APPLY FILTERS ===
 filtered_df = filter_data_by_selections(
