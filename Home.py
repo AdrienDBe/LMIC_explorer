@@ -891,26 +891,6 @@ else:
         # Show excluded countries caption (after popover)
         if exclude_top_n > 0:
             st.caption(f"🚫 Excluded: {', '.join(excluded_countries[:5])}{'...' if len(excluded_countries) > 5 else ''}")
-            
-            # Filter the map_filtered_df for downstream use
-            map_filtered_df = map_filtered_df[~map_filtered_df['Country'].isin(excluded_countries)].copy()
-            
-            # Filter the main filtered_df for ALL downstream use
-            filtered_df = filtered_df[~filtered_df['Country'].isin(excluded_countries)].copy()
-        else:
-            display_data = country_counts.copy()
-            excluded_countries = []
-        
-        # Add log scale for visualization
-        display_data['Log_Count'] = np.log10(display_data['Count'] + 1)
-        
-        # NOW show Top 5 table (AFTER exclusion)
-        st.markdown(f"Top 5 Countries (per {display_label}):")
-        st.dataframe(
-            display_data.head(5)[['Country', 'Count']],
-            hide_index=True,
-            height=200
-        )
     
     # END of with col_map1 block - calculate available countries HERE
     available_countries_for_pills = [c for c in display_data['Country'].tolist() if c != 'Unknown']
