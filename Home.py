@@ -910,7 +910,6 @@ else:
 
     with search_col2:
         # Number of clusters slider (will be applied after data processing)
-        st.markdown("**Clustering Controls:**")
         n_clusters = st.slider(
             "Number of Clusters:",
             min_value=2,
@@ -976,9 +975,6 @@ else:
         # Add cluster column to display
         if 'Suggested Cluster' in grouped_data.columns:
             display_cols = display_cols + ['Suggested Cluster']
-            
-            # Show cluster summary table
-            st.markdown("#### 📊 Cluster Summary")
             
             if display_type == "Organizations":
                 cluster_summary = grouped_data.groupby('Suggested Cluster').agg({
