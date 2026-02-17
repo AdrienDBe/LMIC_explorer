@@ -764,8 +764,6 @@ selected_region = handle_all_selection(
 )
 st.session_state.selected_region = selected_region
 
-st.sidebar.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
-
 # Country selector (MOVED HERE from search_col1)
 if len(available_countries_for_pills_initial) > 12:
     with st.sidebar.popover("Select Countries"):
