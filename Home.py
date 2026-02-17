@@ -793,6 +793,7 @@ regional_hubs_raw = st.sidebar.pills(
     options=["All", "A*STAR SIgN", "Institut Pasteur Network", "KEMRI-Wellcome", "AHRI"],
     selection_mode="multi",
     key="regional_hubs_input",
+    label_visibility="collapsed",
     default=["All"]
 )
 if "All" in regional_hubs_raw and len(regional_hubs_raw) > 1:
