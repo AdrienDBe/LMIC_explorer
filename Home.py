@@ -925,7 +925,7 @@ else:
     available_countries_for_pills = [country for country in available_countries_for_pills if country != 'Unknown']
 
     col1_table, col2_table = st.columns([1, 2])
-    with col2_table:
+    with search_col1:
         if len(available_countries_for_pills) > 12:
             with st.popover("🌍 Select Countries"):
                 selected_countries_pills = st.pills(
@@ -949,7 +949,7 @@ else:
         elif not selected_countries_pills:
             selected_countries_pills = ["All"]
 
-    display_type = col1_table.radio(
+    display_type = search_col1.radio(
         "Display Type:",
         options=["Organizations","Authors"],
         index=0,
@@ -977,10 +977,7 @@ else:
             display_cols = display_cols + ['Suggested Cluster']
             
             # Show cluster summary table in search_col2
-            with search_col2:
-                st.markdown("---")
-                st.markdown("**📊 Cluster Summary**")
-                
+            with search_col2:              
                 if display_type == "Organizations":
                     cluster_summary = grouped_data.groupby('Suggested Cluster').agg({
                         'Organization': 'count',
