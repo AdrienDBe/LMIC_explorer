@@ -188,36 +188,35 @@ button.st-emotion-cache-b0zc2i.e1mwqyj910:hover {
     accent-color: #82C5E0 !important;
 }
 
-/* ==================== SLIDER STYLING (SIMPLE - LEFT BAR ONLY) ==================== */
+/* ==================== SLIDER STYLING (LEFT SIDE BLUE ONLY) ==================== */
 
-/* Remove the thumb value background color */
-[data-testid="stSliderThumbValue"] {
-    background-color: transparent !important;
-    color: #262730 !important;
-}
-
-/* Slider thumb (circle) */
-[data-testid="stSlider"] [role="slider"] {
-    background-color: #82C5E0 !important;
-}
-
-/* The left filled portion of the slider track */
-[data-testid="stSlider"] [data-baseweb="slider"] [role="presentation"]:first-child {
-    background-color: #82C5E0 !important;
-}
-
-/* Alternative selector for filled track */
+/* Reset - remove previous rules */
 [data-testid="stSlider"] .st-eb {
-    background-color: #82C5E0 !important;
+    background-color: transparent !important;
 }
 
-/* Another attempt - target the track's inner filled div */
 [data-testid="stSlider"] div[class*="st-eb"] {
+    background-color: transparent !important;
+}
+
+/* The slider track container has two children - left (filled) and right (unfilled) */
+/* Target ONLY the first child (left filled portion) */
+[data-testid="stSlider"] [data-baseweb="slider"] > div:nth-child(2) > div:first-child {
     background-color: #82C5E0 !important;
 }
 
-/* Most specific - the filled bar before the thumb */
-[data-testid="stSlider"] .st-cl.st-eb {
+/* Alternative - target the filled track specifically */
+[data-testid="stSlider"] .st-ed {
+    background-color: #82C5E0 !important;
+}
+
+/* Keep the right side grey */
+[data-testid="stSlider"] .st-ee {
+    background-color: #E8E8E8 !important;
+}
+
+/* Slider thumb */
+[data-testid="stSlider"] [role="slider"] {
     background-color: #82C5E0 !important;
 }
 
