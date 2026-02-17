@@ -782,15 +782,24 @@ elif not selected_countries_pills:
 
 st.sidebar.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
 
-# Regional Hubs
+# Regional Hubs with info tooltip
+col_hub_label, col_hub_info = st.sidebar.columns([4, 1])
+with col_hub_label:
+    st.markdown("Regional Excellence Hub:")
+with col_hub_info:
+    st.markdown(
+        '<span title="Organizations that provide scientific validation, technology translation, regional market access, and commercial collaboration pathways. These are not primary funders but are critical partners to gain regional access to researchers and institutes." style="cursor: help;">ℹ️</span>',
+        unsafe_allow_html=True,
+        help="Organizations that provide scientific validation, technology translation, regional market access, and commercial collaboration pathways. These are not primary funders but are critical partners to gain regional access to researchers and institutes."
+    )
+
 regional_hubs_raw = st.sidebar.pills(
-    "Regional Excellence Hub:",
+    "",  # Empty label since we added it above
     options=["All", "A*STAR SIgN", "Institut Pasteur Network", "KEMRI-Wellcome", "AHRI"],
     selection_mode="multi",
     key="regional_hubs_input",
     default=["All"]
 )
-
 if "All" in regional_hubs_raw and len(regional_hubs_raw) > 1:
     regional_hubs = [item for item in regional_hubs_raw if item != "All"]
 elif not regional_hubs_raw:
@@ -978,6 +987,11 @@ else:
                 ticktext=['1', '10', '100', '1K', '10K']
             ),
             legend=dict(
+                legend=dict(
+                    title=dict(
+                        text="Regional Excellence Network",
+                        font=dict(size=12, color="#262730", family="Arial, sans-serif")
+                    ),
                 yanchor="top",
                 y=0.99,
                 xanchor="left",
