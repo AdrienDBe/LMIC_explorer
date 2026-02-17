@@ -699,7 +699,8 @@ income_category = st.sidebar.pills(
     "Filter by Income Category:",
     ["All regions", "LMIC"],
     selection_mode="single",
-    key="income_category_input"
+    key="income_category_input",
+    default="LMIC"
 )
 st.session_state.income_category = income_category
 
