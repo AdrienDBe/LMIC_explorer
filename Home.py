@@ -188,21 +188,27 @@ button.st-emotion-cache-b0zc2i.e1mwqyj910:hover {
     accent-color: #82C5E0 !important;
 }
 
-/* ==================== SLIDER STYLING ==================== */
+/* ==================== SLIDER STYLING (COMPLETE) ==================== */
 
-/* Slider track (the bar) */
-[data-testid="stSlider"] [data-baseweb="slider"] > div > div {
+/* Slider track background (entire bar) */
+[data-testid="stSlider"] [data-baseweb="slider"] > div:first-child {
     background-color: #E8E8E8 !important;
 }
 
-/* Slider filled track (the filled portion) */
-[data-testid="stSlider"] [data-baseweb="slider"] [role="slider"]::before {
+/* Slider filled track (left side - the filled portion) */
+[data-testid="stSlider"] [data-baseweb="slider"] > div:first-child > div:first-child {
+    background-color: #82C5E0 !important;
+}
+
+/* Slider track using class names from your inspector */
+[data-testid="stSlider"] .st-cl.st-cn {
     background-color: #82C5E0 !important;
 }
 
 /* Slider thumb (the circle you drag) */
 [data-testid="stSlider"] [data-baseweb="slider"] [role="slider"] {
     background-color: #82C5E0 !important;
+    border-color: #82C5E0 !important;
 }
 
 /* Slider thumb on hover */
@@ -210,10 +216,16 @@ button.st-emotion-cache-b0zc2i.e1mwqyj910:hover {
     background-color: #6BADCC !important;
 }
 
-/* Slider track fill */
-[data-testid="stSlider"] [data-baseweb="slider"] > div > div > div {
+/* Target ALL slider track elements */
+[data-testid="stSlider"] div[style*="height: 0.25rem"] {
     background-color: #82C5E0 !important;
 }
+
+/* Remove any red color */
+[data-testid="stSlider"] * {
+    border-color: #82C5E0 !important;
+}
+
 button.st-emotion-cache-tx7mgd.e1mwqyj911,
 button.st-emotion-cache-tx7mgd.e1mwqyj911[kind="pillsActive"],
 .stPills button[kind="pillsActive"],
