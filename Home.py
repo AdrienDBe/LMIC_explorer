@@ -160,7 +160,62 @@ button.st-emotion-cache-b0zc2i.e1mwqyj910:hover {
     color: #262730 !important;
     border: 1px solid #B0B0B0 !important;
 }
+/* ==================== RADIO BUTTON STYLING ==================== */
 
+/* Radio button container */
+[data-testid="stRadio"] > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* Radio button labels */
+[data-testid="stRadio"] label {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 1rem !important;
+    border-radius: 20px !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+    background-color: #F0F0F0 !important;
+    border: 1px solid #D3D3D3 !important;
+    font-weight: 500 !important;
+}
+
+/* Radio button labels on hover */
+[data-testid="stRadio"] label:hover {
+    background-color: #E8E8E8 !important;
+    border: 1px solid #B0B0B0 !important;
+}
+
+/* Hide the default radio circle */
+[data-testid="stRadio"] label input[type="radio"] {
+    display: none !important;
+}
+
+/* Style for checked radio button */
+[data-testid="stRadio"] label:has(input[type="radio"]:checked) {
+    background-color: #82C5E0 !important;
+    color: #FFFFFF !important;
+    border: 1px solid #82C5E0 !important;
+    font-weight: 600 !important;
+}
+
+/* Hover state for checked radio button */
+[data-testid="stRadio"] label:has(input[type="radio"]:checked):hover {
+    background-color: #6BADCC !important;
+    border: 1px solid #6BADCC !important;
+}
+
+/* Radio button text color */
+[data-testid="stRadio"] label span {
+    color: #262730 !important;
+}
+
+/* Radio button text color when selected */
+[data-testid="stRadio"] label:has(input[type="radio"]:checked) span {
+    color: #FFFFFF !important;
+}
 button.st-emotion-cache-tx7mgd.e1mwqyj911,
 button.st-emotion-cache-tx7mgd.e1mwqyj911[kind="pillsActive"],
 .stPills button[kind="pillsActive"],
