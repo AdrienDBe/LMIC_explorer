@@ -160,53 +160,15 @@ button.st-emotion-cache-b0zc2i.e1mwqyj910:hover {
     color: #262730 !important;
     border: 1px solid #B0B0B0 !important;
 }
-/* ==================== RADIO BUTTON CIRCLE COLOR (COMPREHENSIVE) ==================== */
+/* ==================== RADIO BUTTON CIRCLE COLOR (SIMPLE) ==================== */
 
-/* Modern accent-color approach */
+/* Use accent-color only - simplest approach */
 [data-testid="stRadio"] input[type="radio"] {
     accent-color: #82C5E0 !important;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    width: 20px;
-    height: 20px;
-    border: 2px solid #D3D3D3;
-    border-radius: 50%;
-    outline: none;
-    cursor: pointer;
 }
 
-[data-testid="stRadio"] input[type="radio"]:checked {
-    border-color: #82C5E0 !important;
-    background-color: #FFFFFF !important;
-    position: relative;
-}
-
-[data-testid="stRadio"] input[type="radio"]:checked::after {
-    content: '';
-    display: block;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background-color: #82C5E0 !important;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-
-/* Target the SVG circle inside radio */
-[data-testid="stRadio"] svg circle {
-    fill: #82C5E0 !important;
-    stroke: #82C5E0 !important;
-}
-
-/* Target any nested divs that could be the radio dot */
-[data-testid="stRadio"] [role="radio"] div div {
-    background-color: #82C5E0 !important;
-}
-
-[data-testid="stRadio"] [aria-checked="true"] div div {
+/* Backup for inner circle */
+[data-testid="stRadio"] [role="radio"] > div > div:last-child {
     background-color: #82C5E0 !important;
 }
 
