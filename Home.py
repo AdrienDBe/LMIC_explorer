@@ -813,7 +813,18 @@ else:
             filtered_df, map_display_type, regional_hubs
         )
         
-        # Exclude top countries option (BEFORE processing display_data)
+        # Show Top 5 table FIRST (before exclusion)
+        display_data_preview = country_counts.copy()
+        display_data_preview['Log_Count'] = np.log10(display_data_preview['Count'] + 1)
+        
+        st.markdown(f"Top 5 Countries (per {display_label}):")
+        st.dataframe(
+            display_data_preview.head(5)[['Country', 'Count']],
+            hide_index=True,
+            height=200
+        )
+        
+        # Exclude top countries option (RIGHT AFTER the table)
         with st.popover("⚙️ Exclude Top Countries"):
             exclude_top_n = st.number_input(
                 "Exclude top N countries:",
@@ -841,18 +852,7 @@ else:
         
         # Add log scale for visualization
         display_data['Log_Count'] = np.log10(display_data['Count'] + 1)
-    
-        # Show Top 5 table
-        st.markdown(f"Top 5 Countries (per {display_label}):")
-        st.dataframe(
-            display_data.head(5)[['Country', 'Count']],
-            hide_index=True,
-            height=200
-        )
-        
-        # Get available countries for pills (after exclusion)
-        available_countries_for_pills = [c for c in display_data['Country'].tolist() if c != 'Unknown']
-        
+                
         # Country selector pills
         if len(available_countries_for_pills) > 12:
             with st.popover("🌍 Select Countries"):
@@ -975,21 +975,49 @@ else:
         
     st.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
 
+    # Get available countries for pills (after exclusion)
+    available_countries_for_pills = [c for c in display_data['Country'].tolist() if c != 'Unknown']
+
     # Search and display section
     search_col1, search_col2 = st.columns(2)
 
-    with search_col1:
-        search_term = st.text_input("Search by name or organization:", placeholder="Enter search term...")
-        if 'Organization' in filtered_df.columns:
-            available_orgs = get_unique_values(filtered_df, 'Organization')
-            search_org = st.selectbox(
-                "Filter by Organization:",
-                options=['All'] + available_orgs,
-                index=0
+with search_col1:
+    search_term = st.text_input("Search by name or organization:", placeholder="Enter search term...")
+    
+    if 'Organization' in filtered_df.columns:
+        available_orgs = get_unique_values(filtered_df, 'Organization')
+        search_org = st.selectbox(
+            "Filter by Organization:",
+            options=['All'] + available_orgs,
+            index=0
+        )
+    else:
+        search_org = 'All'
+    
+    # Country selector pills (MOVED HERE from col_map1)
+    if len(available_countries_for_pills) > 12:
+        with st.popover("🌍 Select Countries"):
+            selected_countries_pills = st.pills(
+                "Filter by Countries:",
+                options=["All"] + available_countries_for_pills,
+                selection_mode="multi",
+                default=["All"],
+                key="countries_pills_input"
             )
-        else:
-            search_org = 'All'
-
+    else:
+        selected_countries_pills = st.pills(
+            "Filter by Countries:",
+            options=["All"] + available_countries_for_pills,
+            selection_mode="multi",
+            default=["All"],
+            key="countries_pills_input"
+        )
+    
+    if "All" in selected_countries_pills and len(selected_countries_pills) > 1:
+        selected_countries_pills = [item for item in selected_countries_pills if item != "All"]
+    elif not selected_countries_pills:
+        selected_countries_pills = ["All"]
+        
     display_type = search_col1.radio(
         "Display Type:",
         options=["Organizations","Authors"],
