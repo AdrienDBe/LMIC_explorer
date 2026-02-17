@@ -188,47 +188,40 @@ button.st-emotion-cache-b0zc2i.e1mwqyj910:hover {
     accent-color: #82C5E0 !important;
 }
 
-/* ==================== SLIDER STYLING (FIXED) ==================== */
+/* ==================== SLIDER STYLING (SIMPLE - LEFT BAR ONLY) ==================== */
 
-/* Reset - remove the overly broad rule */
-/* Remove this if you added it: [data-testid="stSlider"] * */
-
-/* Slider container background - keep it light/transparent */
-[data-testid="stSlider"] .st-e8.st-e9 {
+/* Remove the thumb value background color */
+[data-testid="stSliderThumbValue"] {
     background-color: transparent !important;
+    color: #262730 !important;
 }
 
-/* Slider track container */
-[data-testid="stSlider"] .st-emotion-cache-dx6mrm {
-    background-color: transparent !important;
-}
-
-/* The entire slider track (grey unfilled part) */
-[data-testid="stSlider"] .st-cl.st-cn.st-co.st-cm {
-    background-color: #E8E8E8 !important;
-}
-
-/* The filled portion (left side) - this uses pseudo-element */
-[data-testid="stSlider"] .st-cl.st-cn.st-co.st-cm::before {
-    content: '';
-    background-color: #82C5E0 !important;
-}
-
-/* Alternative: target by data-baseweb for filled track */
-[data-testid="stSlider"] [data-baseweb="slider"] > div > div:first-child {
-    background-color: #82C5E0 !important;
-}
-
-/* Slider thumb (the draggable circle) */
+/* Slider thumb (circle) */
 [data-testid="stSlider"] [role="slider"] {
     background-color: #82C5E0 !important;
 }
 
-/* Slider thumb value box */
-[data-testid="stSliderThumbValue"] {
+/* The left filled portion of the slider track */
+[data-testid="stSlider"] [data-baseweb="slider"] [role="presentation"]:first-child {
     background-color: #82C5E0 !important;
-    color: #FFFFFF !important;
 }
+
+/* Alternative selector for filled track */
+[data-testid="stSlider"] .st-eb {
+    background-color: #82C5E0 !important;
+}
+
+/* Another attempt - target the track's inner filled div */
+[data-testid="stSlider"] div[class*="st-eb"] {
+    background-color: #82C5E0 !important;
+}
+
+/* Most specific - the filled bar before the thumb */
+[data-testid="stSlider"] .st-cl.st-eb {
+    background-color: #82C5E0 !important;
+}
+
+
 button.st-emotion-cache-tx7mgd.e1mwqyj911,
 button.st-emotion-cache-tx7mgd.e1mwqyj911[kind="pillsActive"],
 .stPills button[kind="pillsActive"],
