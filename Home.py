@@ -960,33 +960,6 @@ else:
         )
         st.caption("ℹ️ Clusters will group similar organizations/authors based on output and impact")
 
-    # === SLIDER COLOR CSS (based on forum solution) ===
-    slider_percentage = ((n_clusters - 2) / (10 - 2)) * 100
-    
-    # Slider thumb
-    st.markdown('''
-    <style>
-    div.stSlider > div[data-baseweb="slider"] > div > div > div[role="slider"] {
-        background-color: rgb(130, 197, 224);
-        box-shadow: rgb(130 197 224 / 20%) 0px 0px 0px 0.2rem;
-    }
-    </style>
-    ''', unsafe_allow_html=True)
-    
-    # Slider track gradient
-    slider_track_css = f'''
-    <style>
-    div.stSlider > div[data-baseweb="slider"] > div > div {{
-        background: linear-gradient(to right, 
-                                    rgb(130, 197, 224) 0%, 
-                                    rgb(130, 197, 224) {slider_percentage}%, 
-                                    rgba(232, 232, 232, 1) {slider_percentage}%, 
-                                    rgba(232, 232, 232, 1) 100%);
-    }}
-    </style>
-    '''
-    st.markdown(slider_track_css, unsafe_allow_html=True)
-
     available_countries_for_pills = get_unique_values(map_filtered_df, 'Country') if 'map_filtered_df' in locals() else get_unique_values(filtered_df, 'Country')
     available_countries_for_pills = [country for country in available_countries_for_pills if country != 'Unknown']
 
