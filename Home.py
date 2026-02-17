@@ -846,25 +846,50 @@ else:
             filtered_df, map_display_type, regional_hubs
         )
         
-        # Exclude top countries option (BEFORE showing the table)
-        with st.popover("⚙️ Exclude Top Countries"):
-            exclude_top_n = st.number_input(
-                "Exclude top N countries:",
-                min_value=0,
-                max_value=20,
-                value=0,
-                step=1,
-                help="Remove the top performing countries from analysis"
-            )
-            if exclude_top_n > 0:
-                st.caption(f"✓ Excluding top {exclude_top_n} countries")
+        # Get current exclusion value from session state (set by popover below)
+        exclude_top_n = st.session_state.get('exclude_top_n_input', 0)
         
-        # Apply exclusion filter FIRST
+        # Apply exclusion filter
         if exclude_top_n > 0:
             excluded_countries = country_counts.head(exclude_top_n)['Country'].tolist()
             display_data = country_counts[~country_counts['Country'].isin(excluded_countries)].copy()
             
-            # Show excluded countries
+            # Filter the map_filtered_df for downstream use
+            map_filtered_df = map_filtered_df[~map_filtered_df['Country'].isin(excluded_countries)].copy()
+            
+            # Filter the main filtered_df for ALL downstream use
+            filtered_df = filtered_df[~filtered_df['Country'].isin(excluded_countries)].copy()
+        else:
+            display_data = country_counts.copy()
+            excluded_countries = []
+        
+        # Add log scale for visualization
+        display_data['Log_Count'] = np.log10(display_data['Count'] + 1)
+        
+        # Show Top 5 table FIRST
+        st.markdown(f"Top 5 Countries (per {display_label}):")
+        st.dataframe(
+            display_data.head(5)[['Country', 'Count']],
+            hide_index=True,
+            height=200
+        )
+        
+        # Exclude top countries popover AFTER the table
+        with st.popover("⚙️ Exclude Top Countries"):
+            st.number_input(
+                "Exclude top N countries:",
+                min_value=0,
+                max_value=20,
+                value=exclude_top_n,
+                step=1,
+                help="Remove the top performing countries from analysis",
+                key="exclude_top_n_input"  # This syncs with session_state automatically
+            )
+            if exclude_top_n > 0:
+                st.caption(f"✓ Excluding top {exclude_top_n} countries")
+        
+        # Show excluded countries caption (after popover)
+        if exclude_top_n > 0:
             st.caption(f"🚫 Excluded: {', '.join(excluded_countries[:5])}{'...' if len(excluded_countries) > 5 else ''}")
             
             # Filter the map_filtered_df for downstream use
