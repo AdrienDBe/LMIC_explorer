@@ -188,37 +188,6 @@ button.st-emotion-cache-b0zc2i.e1mwqyj910:hover {
     accent-color: #82C5E0 !important;
 }
 
-/* ==================== SLIDER LEFT BLUE, RIGHT GREY ==================== */
-
-/* The parent container */
-[data-testid="stSlider"] .st-emotion-cache-1rr4qq7 {
-    position: relative;
-}
-
-/* Target the FIRST track div (LEFT side - filled portion) */
-[data-testid="stSlider"] .st-emotion-cache-1rr4qq7 > div.st-cl:first-of-type {
-    background-color: #82C5E0 !important;
-}
-
-/* Target the LAST track div (RIGHT side - unfilled portion) */
-[data-testid="stSlider"] .st-emotion-cache-1rr4qq7 > div.st-cl:last-of-type {
-    background-color: #E8E8E8 !important;
-}
-
-/* Alternative - use nth-child */
-[data-testid="stSlider"] div[style*="height: 0.25rem"]:first-child {
-    background-color: #82C5E0 !important;
-}
-
-[data-testid="stSlider"] div[style*="height: 0.25rem"]:last-child {
-    background-color: #E8E8E8 !important;
-}
-
-/* Slider thumb */
-[data-testid="stSlider"] [role="slider"] {
-    background-color: #82C5E0 !important;
-}
-
 button.st-emotion-cache-tx7mgd.e1mwqyj911,
 button.st-emotion-cache-tx7mgd.e1mwqyj911[kind="pillsActive"],
 .stPills button[kind="pillsActive"],
@@ -300,6 +269,16 @@ button[kind="pillsActive"][data-testid="stBaseButton-pillsActive"]:hover {
 
 </style>
 """, unsafe_allow_html=True)
+
+# Radio button CSS (add to your main CSS block)
+radio_css = '''
+<style>
+div[data-testid="stRadio"] input[type="radio"] {
+    accent-color: #82C5E0 !important;
+}
+</style>
+'''
+st.markdown(radio_css, unsafe_allow_html=True)
 
 st.sidebar.markdown("")
 
@@ -978,6 +957,36 @@ else:
             help="Adjust to see different groupings based on publications, citations, and region"
         )
         st.caption("ℹ️ Clusters will group similar organizations/authors based on output and impact")
+        
+        # Calculate percentage for gradient (2-10 range converted to 0-100%)
+        slider_percentage = ((n_clusters - 2) / (10 - 2)) * 100
+        
+        # Inject CSS for slider colors
+        slider_css = f'''
+        <style>
+        /* Slider track with gradient */
+        div.stSlider > div[data-baseweb="slider"] > div > div {{
+            background: linear-gradient(to right, 
+                                        #82C5E0 0%, 
+                                        #82C5E0 {slider_percentage}%, 
+                                        #E8E8E8 {slider_percentage}%, 
+                                        #E8E8E8 100%);
+        }}
+        
+        /* Slider thumb (circle) */
+        div.stSlider > div[data-baseweb="slider"] > div > div > div[role="slider"] {{
+            background-color: #82C5E0;
+            box-shadow: rgb(130 197 224 / 20%) 0px 0px 0px 0.2rem;
+        }}
+        
+        /* Slider value number */
+        div.stSlider > div[data-baseweb="slider"] > div > div > div > div {{
+            color: #262730;
+        }}
+        </style>
+        '''
+        
+        st.markdown(slider_css, unsafe_allow_html=True)
         
     available_countries_for_pills = get_unique_values(map_filtered_df, 'Country') if 'map_filtered_df' in locals() else get_unique_values(filtered_df, 'Country')
     available_countries_for_pills = [country for country in available_countries_for_pills if country != 'Unknown']
