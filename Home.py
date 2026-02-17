@@ -596,7 +596,8 @@ selected_income_raw = st.sidebar.pills(
     "Filter by Income Category:",
     filter_options['income_levels'],
     selection_mode="multi",
-    key="income_category_input"
+    key="income_category_input",
+    default=["All"]
 )
 selected_income = handle_all_selection(
     tuple(selected_income_raw) if selected_income_raw else ('All',),
@@ -611,7 +612,8 @@ selected_region_raw = st.sidebar.pills(
     "Filter by Region:",
     filter_options['regions'],
     selection_mode="multi",
-    key="region_input"
+    key="region_input",
+    default=["All"]
 )
 selected_region = handle_all_selection(
     tuple(selected_region_raw) if selected_region_raw else ('All',),
@@ -626,7 +628,8 @@ regional_hubs_raw = st.sidebar.pills(
     "Regional Excellence Hub:",
     options=["All", "A*STAR SIgN", "Institut Pasteur Network", "KEMRI-Wellcome", "AHRI"],
     selection_mode="multi",
-    key="regional_hubs_input"
+    key="regional_hubs_input",
+    default=["All"]
 )
 
 if "All" in regional_hubs_raw and len(regional_hubs_raw) > 1:
@@ -645,7 +648,8 @@ selected_pub_type_raw = st.sidebar.pills(
     "Publication Type:",
     filter_options['pub_types'],
     selection_mode="multi",
-    key="pub_type_input"
+    key="pub_type_input",
+    default=["All"]
 )
 selected_pub_type = handle_all_selection(
     tuple(selected_pub_type_raw) if selected_pub_type_raw else ('All',),
