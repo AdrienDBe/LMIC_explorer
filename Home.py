@@ -188,44 +188,47 @@ button.st-emotion-cache-b0zc2i.e1mwqyj910:hover {
     accent-color: #82C5E0 !important;
 }
 
-/* ==================== SLIDER STYLING (COMPLETE) ==================== */
+/* ==================== SLIDER STYLING (FIXED) ==================== */
 
-/* Slider track background (entire bar) */
-[data-testid="stSlider"] [data-baseweb="slider"] > div:first-child {
+/* Reset - remove the overly broad rule */
+/* Remove this if you added it: [data-testid="stSlider"] * */
+
+/* Slider container background - keep it light/transparent */
+[data-testid="stSlider"] .st-e8.st-e9 {
+    background-color: transparent !important;
+}
+
+/* Slider track container */
+[data-testid="stSlider"] .st-emotion-cache-dx6mrm {
+    background-color: transparent !important;
+}
+
+/* The entire slider track (grey unfilled part) */
+[data-testid="stSlider"] .st-cl.st-cn.st-co.st-cm {
     background-color: #E8E8E8 !important;
 }
 
-/* Slider filled track (left side - the filled portion) */
-[data-testid="stSlider"] [data-baseweb="slider"] > div:first-child > div:first-child {
+/* The filled portion (left side) - this uses pseudo-element */
+[data-testid="stSlider"] .st-cl.st-cn.st-co.st-cm::before {
+    content: '';
     background-color: #82C5E0 !important;
 }
 
-/* Slider track using class names from your inspector */
-[data-testid="stSlider"] .st-cl.st-cn {
+/* Alternative: target by data-baseweb for filled track */
+[data-testid="stSlider"] [data-baseweb="slider"] > div > div:first-child {
     background-color: #82C5E0 !important;
 }
 
-/* Slider thumb (the circle you drag) */
-[data-testid="stSlider"] [data-baseweb="slider"] [role="slider"] {
-    background-color: #82C5E0 !important;
-    border-color: #82C5E0 !important;
-}
-
-/* Slider thumb on hover */
-[data-testid="stSlider"] [data-baseweb="slider"] [role="slider"]:hover {
-    background-color: #6BADCC !important;
-}
-
-/* Target ALL slider track elements */
-[data-testid="stSlider"] div[style*="height: 0.25rem"] {
+/* Slider thumb (the draggable circle) */
+[data-testid="stSlider"] [role="slider"] {
     background-color: #82C5E0 !important;
 }
 
-/* Remove any red color */
-[data-testid="stSlider"] * {
-    border-color: #82C5E0 !important;
+/* Slider thumb value box */
+[data-testid="stSliderThumbValue"] {
+    background-color: #82C5E0 !important;
+    color: #FFFFFF !important;
 }
-
 button.st-emotion-cache-tx7mgd.e1mwqyj911,
 button.st-emotion-cache-tx7mgd.e1mwqyj911[kind="pillsActive"],
 .stPills button[kind="pillsActive"],
