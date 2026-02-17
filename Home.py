@@ -1040,7 +1040,7 @@ else:
                         'Suggested Cluster': True
                     },
                     size_max=30,
-                    color_discrete_sequence=['#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3', '#AA96DA', '#F38181', '#FCBAD3', '#A8D8EA', '#FFA07A', '#98D8C8']
+                    color_discrete_sequence=px.colors.qualitative.Plotly  # CHANGE THIS
                 )
                 
             else:  # Authors
@@ -1068,7 +1068,7 @@ else:
                         'Suggested Cluster': True
                     },
                     size_max=30,
-                    color_discrete_sequence=['#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3', '#AA96DA', '#F38181', '#FCBAD3', '#A8D8EA', '#FFA07A', '#98D8C8']
+                    color_discrete_sequence=px.colors.qualitative.Plotly  # CHANGE THIS
                 )
             
             fig_scatter.update_layout(
@@ -1095,8 +1095,7 @@ else:
             fig_scatter.update_traces(
                 marker=dict(
                     opacity=1,
-                    line=dict(width=0.75, color='black'),
-                    color='#82C5E0'
+                    line=dict(width=0.75, color='black')
                 )
             )
             
