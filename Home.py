@@ -840,6 +840,7 @@ else:
             "Display Type:",
             options=["Publications", "Authors", "Organizations"],
             index=1,
+            display_type = search_col1.radio,
             key="map_display_type_radio"
         )
     
