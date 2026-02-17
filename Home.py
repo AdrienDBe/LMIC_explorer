@@ -212,6 +212,16 @@ button[kind="pillsActive"][data-testid="stBaseButton-pillsActive"]:hover {
     display: none !important;
 }
 
+/* Reduce expander content padding */
+[data-testid="stExpander"] > div > div {
+    padding-top: 0.5rem !important;
+}
+
+/* Remove extra spacing in expander */
+[data-testid="stExpanderDetails"] {
+    padding-top: 0 !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -945,11 +955,13 @@ else:
                 )
             
             fig_scatter.update_layout(
-                height=max(400, len(plot_data) * 20),
-                margin=dict(l=200, r=50, t=10, b=50),  # Reduced top margin from 50 to 10
-                xaxis_title="Average Citations per Publication",
-                yaxis_title=None,
-                showlegend=False
+            height=max(600, min(len(plot_data) * 15, 1000)),  # Cap at 1000px, 15px per row
+            margin=dict(l=200, r=50, t=0, b=50),  # t=0 for no top margin
+            xaxis_title="Average Citations per Publication",
+            yaxis_title=None,
+            showlegend=False,
+            plot_bgcolor='white',
+            paper_bgcolor='white'
             )
             
             fig_scatter.update_traces(
