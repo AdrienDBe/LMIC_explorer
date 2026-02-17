@@ -936,9 +936,6 @@ else:
         else:
             search_org = 'All'
 
-    with search_col2:
-        st.caption("ℹ️ Clusters will group similar organizations/authors based on output and impact")
-
     available_countries_for_pills = get_unique_values(map_filtered_df, 'Country') if 'map_filtered_df' in locals() else get_unique_values(filtered_df, 'Country')
     available_countries_for_pills = [country for country in available_countries_for_pills if country != 'Unknown']
 
@@ -1027,6 +1024,8 @@ else:
                     use_container_width=True,
                     height=200
                 )
+                st.caption("ℹ️ Clusters will group similar organizations/authors based on output and impact")
+                
     with st.expander("View Detailed Table", expanded=False):
         if len(grouped_data) > 0:
             result_count = len(grouped_data)
