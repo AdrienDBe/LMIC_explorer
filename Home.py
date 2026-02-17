@@ -724,8 +724,8 @@ else:
     available_countries_for_pills_initial = []
 
 # --- SIDEBAR FILTERS ---
+st.sidebar.markdown("# LMIC Explorer")
 With st.sidebar:
-    st.sidebar.markdown("# LMIC Explorer")
     st.info("Researchers with 3+ publications; 3204 Immunology (Fields of Research ANZSRC 2020)")
 
 
