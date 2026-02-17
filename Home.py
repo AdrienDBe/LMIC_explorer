@@ -991,16 +991,17 @@ else:
                     title=dict(
                         text="Regional Excellence Network",
                         font=dict(size=12, color="#262730", family="Arial, sans-serif")
-                    ),
-                yanchor="top",
-                y=0.99,
-                xanchor="left",
-                x=0.01,
-                bgcolor="rgba(255,255,255,0.8)",
-                bordercolor="rgba(0,0,0,0.2)",
-                borderwidth=1
-            )
+                        ),
+                    yanchor="top",
+                    y=0.99,
+                    xanchor="left",
+                    x=0.01,
+                    bgcolor="rgba(255,255,255,0.8)",
+                    bordercolor="rgba(0,0,0,0.2)",
+                    borderwidth=1)
+                )
         )
+            
         
         st.plotly_chart(fig_heatmap, use_container_width=True)
         del fig_heatmap
