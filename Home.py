@@ -415,7 +415,7 @@ def calculate_search_results(df, search_term, search_org, selected_countries_pil
     return search_results
     
 def process_grouped_data(search_results, display_type):
-    """Process grouped data"""
+    """Process grouped data with proper aggregation"""
     try:
         df = search_results.copy()
         
@@ -425,11 +425,13 @@ def process_grouped_data(search_results, display_type):
             st.error(f"Missing required columns: {missing_cols}")
             return pd.DataFrame(), []
         
+        # Convert category columns to strings
         for col in ['Name', 'Organization', 'Country']:
             if col in df.columns:
                 if df[col].dtype.name == 'category':
                     df[col] = df[col].astype(str)
         
+        # Clean data
         df = df[df['Name'].notna()]
         df = df[df['Organization'].notna()]
         df = df[df['Country'].notna()]
@@ -437,28 +439,65 @@ def process_grouped_data(search_results, display_type):
         df = df[df['Organization'] != 'Unknown']
         df = df[df['Country'] != 'Unknown']
         
+        # Convert numeric columns
         df['Publications'] = pd.to_numeric(df['Publications'], errors='coerce').fillna(0)
         df['Citations'] = pd.to_numeric(df['Citations'], errors='coerce').fillna(0)
         
+        # Remove rows with 0 publications
         df = df[df['Publications'] > 0]
         
         if len(df) == 0:
             return pd.DataFrame(), []
         
         if display_type == "Authors":
+            # Group by Name, Organization, Country
+            grouped_data = df.groupby(
+                ['Name', 'Organization', 'Country'],
+                as_index=False
+            ).agg({
+                'Publications': 'sum',
+                'Citations': 'sum'
+            })
+            
+            # Calculate Citations Mean
+            grouped_data['Citations Mean'] = (
+                grouped_data['Citations'] / grouped_data['Publications']
+            ).round(2)
+            
             display_cols = ['Name', 'Organization', 'Country', 'Publications', 'Citations', 'Citations Mean']
             
-        else:
-            display_cols = ['Organization', 'Country', 'Publications', 'Citations', 'Citations Mean']
+        else:  # Organizations
+            # Group by Organization and Country
+            grouped_data = df.groupby(
+                ['Organization', 'Country'],
+                as_index=False
+            ).agg({
+                'Publications': 'sum',
+                'Citations': 'sum',
+                'Name': 'nunique'  # Count unique authors
+            })
+            
+            # Rename Name column to Authors
+            grouped_data = grouped_data.rename(columns={'Name': 'Authors'})
+            
+            # Calculate Citations Mean
+            grouped_data['Citations Mean'] = (
+                grouped_data['Citations'] / grouped_data['Publications']
+            ).round(2)
+            
+            display_cols = ['Organization', 'Country', 'Authors', 'Publications', 'Citations', 'Citations Mean']
 
-        df_display = df[display_cols].sort_values('Publications', ascending=False)
-        df_display = df_display.reset_index(drop=True)
-        df_display = df_display.fillna(0)
+        # Sort and clean
+        grouped_data = grouped_data.sort_values('Publications', ascending=False)
+        grouped_data = grouped_data.reset_index(drop=True)
+        grouped_data = grouped_data.fillna(0)
 
-        return df_display, display_cols
+        return grouped_data, display_cols
         
     except Exception as e:
         st.error(f"Error in process_grouped_data: {str(e)}")
+        import traceback
+        st.error(f"Traceback: {traceback.format_exc()}")
         return pd.DataFrame(), []
         
 def handle_all_selection(current_selection_tuple, all_options_tuple):
