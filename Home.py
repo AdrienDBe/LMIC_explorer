@@ -188,30 +188,29 @@ button.st-emotion-cache-b0zc2i.e1mwqyj910:hover {
     accent-color: #82C5E0 !important;
 }
 
-/* ==================== SLIDER STYLING (LEFT SIDE BLUE ONLY) ==================== */
+/* ==================== SLIDER LEFT BLUE, RIGHT GREY ==================== */
 
-/* Reset - remove previous rules */
-[data-testid="stSlider"] .st-eb {
-    background-color: transparent !important;
+/* The parent container */
+[data-testid="stSlider"] .st-emotion-cache-1rr4qq7 {
+    position: relative;
 }
 
-[data-testid="stSlider"] div[class*="st-eb"] {
-    background-color: transparent !important;
-}
-
-/* The slider track container has two children - left (filled) and right (unfilled) */
-/* Target ONLY the first child (left filled portion) */
-[data-testid="stSlider"] [data-baseweb="slider"] > div:nth-child(2) > div:first-child {
+/* Target the FIRST track div (LEFT side - filled portion) */
+[data-testid="stSlider"] .st-emotion-cache-1rr4qq7 > div.st-cl:first-of-type {
     background-color: #82C5E0 !important;
 }
 
-/* Alternative - target the filled track specifically */
-[data-testid="stSlider"] .st-ed {
+/* Target the LAST track div (RIGHT side - unfilled portion) */
+[data-testid="stSlider"] .st-emotion-cache-1rr4qq7 > div.st-cl:last-of-type {
+    background-color: #E8E8E8 !important;
+}
+
+/* Alternative - use nth-child */
+[data-testid="stSlider"] div[style*="height: 0.25rem"]:first-child {
     background-color: #82C5E0 !important;
 }
 
-/* Keep the right side grey */
-[data-testid="stSlider"] .st-ee {
+[data-testid="stSlider"] div[style*="height: 0.25rem"]:last-child {
     background-color: #E8E8E8 !important;
 }
 
@@ -219,7 +218,6 @@ button.st-emotion-cache-b0zc2i.e1mwqyj910:hover {
 [data-testid="stSlider"] [role="slider"] {
     background-color: #82C5E0 !important;
 }
-
 
 button.st-emotion-cache-tx7mgd.e1mwqyj911,
 button.st-emotion-cache-tx7mgd.e1mwqyj911[kind="pillsActive"],
