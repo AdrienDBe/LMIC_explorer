@@ -719,8 +719,8 @@ if 'selected_pub_type' not in st.session_state:
 
 # --- CALCULATE AVAILABLE COUNTRIES (before sidebar) ---
 # This needs to be calculated early, but we'll update it after exclusion
-if 'Country' in filtered_df.columns:
-    temp_country_counts = filtered_df.groupby('Country')['Country'].count().reset_index(name='Count')
+if 'Country' in df.columns:
+    temp_country_counts = df.groupby('Country')['Country'].count().reset_index(name='Count')
     temp_country_counts = temp_country_counts[temp_country_counts['Country'] != 'Unknown']
     available_countries_for_pills_initial = sorted([c for c in temp_country_counts['Country'].tolist() if c != 'Unknown'])
 else:
