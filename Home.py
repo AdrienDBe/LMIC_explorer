@@ -972,7 +972,7 @@ else:
             
             fig_scatter.update_layout(
             height=max(800, min(len(plot_data) * 20, 4000)),  # Cap at 4000px, 20px per row
-            margin=dict(l=200, r=20, t=5, b=30),  # t=0 for no top margin
+            margin=dict(l=200, r=60, t=40, b=40),  # t=0 for no top margin
             xaxis_title="Average Citations per Publication",
             yaxis_title=None,
             showlegend=False,
