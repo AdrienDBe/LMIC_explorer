@@ -1040,7 +1040,7 @@ else:
                         'Suggested Cluster': True  # ADD THIS
                     },
                     size_max=30,
-                    color_discrete_sequence=px.colors.qualitative.Set2  # ADD THIS
+                    color_discrete_sequence=px.colors.qualitative.Safe  # ADD THIS
                 )
                 
             else:  # Authors
