@@ -1056,151 +1056,151 @@ with search_col1:
                 )
                 st.caption("ℹ️ Clusters will group similar organizations/authors based on output and impact")
                 
-    with st.expander("View Detailed Table", expanded=False):
-        if len(grouped_data) > 0:
-            result_count = len(grouped_data)
-            
-            # Create columns for title and download button
-            col_title, col_download = st.columns([3, 1])
-            with col_title:
-                st.write(f"Found {result_count} {display_type.lower()} matching your criteria")
-            with col_download:
-                csv = grouped_data[display_cols].to_csv(index=False)
-                st.download_button(
-                    label="📥 Download CSV",
-                    data=csv,
-                    file_name=f"lmic_explorer_{display_type.lower()}_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                    mime="text/csv"
-                )
-            
-            display_results = grouped_data.copy()
-            
-            if display_type == "Authors":
-                display_results['Search'] = display_results.apply(
-                    lambda row: f"https://www.google.com/search?q={row['Name'].replace(' ', '+')}+{row['Organization'].replace(' ', '+')}",
-                    axis=1
-                )
-                available_display_cols = [col for col in display_cols + ['Search'] if col in display_results.columns]
-            else:
-                display_results['Search'] = display_results.apply(
-                    lambda row: f"https://www.google.com/search?q={row['Organization'].replace(' ', '+')}+{row['Country'].replace(' ', '+')}",
-                    axis=1
-                )
-                available_display_cols = [col for col in display_cols + ['Search'] if col in display_results.columns]
-            
-            dynamic_height = min(max(len(display_results) * 35 + 50, 200), 800)
-            
-            st.data_editor(
-                display_results[available_display_cols],
-                hide_index=True,
-                height=dynamic_height,
-                use_container_width=True,
-                disabled=True,
-                column_config={
-                    "Search": st.column_config.LinkColumn(
-                        "🔍",
-                        display_text="Google Search"
-                    )
-                }
+with st.expander("View Detailed Table", expanded=False):
+    if len(grouped_data) > 0:
+        result_count = len(grouped_data)
+        
+        # Create columns for title and download button
+        col_title, col_download = st.columns([3, 1])
+        with col_title:
+            st.write(f"Found {result_count} {display_type.lower()} matching your criteria")
+        with col_download:
+            csv = grouped_data[display_cols].to_csv(index=False)
+            st.download_button(
+                label="📥 Download CSV",
+                data=csv,
+                file_name=f"lmic_explorer_{display_type.lower()}_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                mime="text/csv"
             )
+        
+        display_results = grouped_data.copy()
+        
+        if display_type == "Authors":
+            display_results['Search'] = display_results.apply(
+                lambda row: f"https://www.google.com/search?q={row['Name'].replace(' ', '+')}+{row['Organization'].replace(' ', '+')}",
+                axis=1
+            )
+            available_display_cols = [col for col in display_cols + ['Search'] if col in display_results.columns]
         else:
-            st.write(f"No {display_type.lower()} match your search criteria")
-
-    with st.expander("Visualize Publications and Citations Mean", expanded=False):
-        if len(grouped_data) > 0:
-            # Limit to top 50 for readability
-            MAX_DISPLAY = 200
-            
-            if display_type == "Organizations":
-                plot_data = grouped_data.copy()
-                plot_data = plot_data.sort_values('Publications', ascending=False).head(MAX_DISPLAY)
-                plot_data = plot_data.sort_values('Citations Mean', ascending=True)
-                
-                subtitle = f"Top {len(plot_data)} Organizations" if len(grouped_data) > MAX_DISPLAY else "All Organizations"
-                
-                # Show title as markdown (not in plotly)
-                st.markdown(f"**{subtitle}: Publications (dot size) vs Citations Mean**")
-
-                fig_scatter = px.scatter(
-                    plot_data,
-                    x='Citations Mean',
-                    y='Organization',
-                    size='Publications',
-                    color='Suggested Cluster',
-                    hover_data={
-                        'Country': True,
-                        'Authors': True,
-                        'Publications': ':,',
-                        'Citations': ':,',
-                        'Citations Mean': ':.2f',
-                        'Suggested Cluster': True
-                    },
-                    size_max=30,
-                    color_discrete_sequence=px.colors.qualitative.Plotly  # CHANGE THIS
-                )
-                
-            else:  # Authors
-                plot_data = grouped_data.copy()
-                plot_data = plot_data.sort_values('Publications', ascending=False).head(MAX_DISPLAY)
-                plot_data = plot_data.sort_values('Citations Mean', ascending=True)
-                
-                subtitle = f"Top {len(plot_data)} Authors" if len(grouped_data) > MAX_DISPLAY else "All Authors"
-                
-                # Show title as markdown (not in plotly)
-                st.markdown(f"**{subtitle}: Publications (dot size) vs Citations Mean**")
-                
-                fig_scatter = px.scatter(
-                    plot_data,
-                    x='Citations Mean',
-                    y='Name',
-                    size='Publications',
-                    color='Suggested Cluster',
-                    hover_data={
-                        'Organization': True,
-                        'Country': True,
-                        'Publications': ':,',
-                        'Citations': ':,',
-                        'Citations Mean': ':.2f',
-                        'Suggested Cluster': True
-                    },
-                    size_max=30,
-                    color_discrete_sequence=px.colors.qualitative.Plotly  # CHANGE THIS
-                )
-            
-            fig_scatter.update_layout(
-            height=max(800, min(len(plot_data) * 20, 4000)),  # Cap at 4000px, 20px per row
-            margin=dict(l=200, r=60, t=40, b=40),  # t=0 for no top margin
-            xaxis_title="Average Citations per Publication",
-            yaxis_title=None,
-            showlegend=True,
-            legend=dict(
-                yanchor="top",
-                y=0.99,
-                xanchor="right",
-                x=0.99,
-                bgcolor="rgba(255,255,255,0.8)"
-            ),
-            plot_bgcolor='white',
-            paper_bgcolor='white'
+            display_results['Search'] = display_results.apply(
+                lambda row: f"https://www.google.com/search?q={row['Organization'].replace(' ', '+')}+{row['Country'].replace(' ', '+')}",
+                axis=1
             )
-
-            # Add tighter axis ranges to eliminate padding
-            fig_scatter.update_xaxes(automargin=True)
-            fig_scatter.update_yaxes(automargin=True)
-            
-            fig_scatter.update_traces(
-                marker=dict(
-                    opacity=1,
-                    line=dict(width=0.75, color='black')
+            available_display_cols = [col for col in display_cols + ['Search'] if col in display_results.columns]
+        
+        dynamic_height = min(max(len(display_results) * 35 + 50, 200), 800)
+        
+        st.data_editor(
+            display_results[available_display_cols],
+            hide_index=True,
+            height=dynamic_height,
+            use_container_width=True,
+            disabled=True,
+            column_config={
+                "Search": st.column_config.LinkColumn(
+                    "🔍",
+                    display_text="Google Search"
                 )
+            }
+        )
+    else:
+        st.write(f"No {display_type.lower()} match your search criteria")
+
+with st.expander("Visualize Publications and Citations Mean", expanded=False):
+    if len(grouped_data) > 0:
+        # Limit to top 50 for readability
+        MAX_DISPLAY = 200
+        
+        if display_type == "Organizations":
+            plot_data = grouped_data.copy()
+            plot_data = plot_data.sort_values('Publications', ascending=False).head(MAX_DISPLAY)
+            plot_data = plot_data.sort_values('Citations Mean', ascending=True)
+            
+            subtitle = f"Top {len(plot_data)} Organizations" if len(grouped_data) > MAX_DISPLAY else "All Organizations"
+            
+            # Show title as markdown (not in plotly)
+            st.markdown(f"**{subtitle}: Publications (dot size) vs Citations Mean**")
+
+            fig_scatter = px.scatter(
+                plot_data,
+                x='Citations Mean',
+                y='Organization',
+                size='Publications',
+                color='Suggested Cluster',
+                hover_data={
+                    'Country': True,
+                    'Authors': True,
+                    'Publications': ':,',
+                    'Citations': ':,',
+                    'Citations Mean': ':.2f',
+                    'Suggested Cluster': True
+                },
+                size_max=30,
+                color_discrete_sequence=px.colors.qualitative.Plotly  # CHANGE THIS
             )
             
-            st.plotly_chart(fig_scatter, use_container_width=True)
+        else:  # Authors
+            plot_data = grouped_data.copy()
+            plot_data = plot_data.sort_values('Publications', ascending=False).head(MAX_DISPLAY)
+            plot_data = plot_data.sort_values('Citations Mean', ascending=True)
             
-            # Show message if data was limited
-            if len(grouped_data) > MAX_DISPLAY:
-                st.info(f"ℹ️ Showing top {MAX_DISPLAY} of {len(grouped_data)} total {display_type.lower()} (sorted by Publications)")
+            subtitle = f"Top {len(plot_data)} Authors" if len(grouped_data) > MAX_DISPLAY else "All Authors"
             
-            del fig_scatter
-            gc.collect()
-            st.caption(f"💡 Dot size represents number of publications. Hover over dots for detailed information.")
+            # Show title as markdown (not in plotly)
+            st.markdown(f"**{subtitle}: Publications (dot size) vs Citations Mean**")
+            
+            fig_scatter = px.scatter(
+                plot_data,
+                x='Citations Mean',
+                y='Name',
+                size='Publications',
+                color='Suggested Cluster',
+                hover_data={
+                    'Organization': True,
+                    'Country': True,
+                    'Publications': ':,',
+                    'Citations': ':,',
+                    'Citations Mean': ':.2f',
+                    'Suggested Cluster': True
+                },
+                size_max=30,
+                color_discrete_sequence=px.colors.qualitative.Plotly  # CHANGE THIS
+            )
+        
+        fig_scatter.update_layout(
+        height=max(800, min(len(plot_data) * 20, 4000)),  # Cap at 4000px, 20px per row
+        margin=dict(l=200, r=60, t=40, b=40),  # t=0 for no top margin
+        xaxis_title="Average Citations per Publication",
+        yaxis_title=None,
+        showlegend=True,
+        legend=dict(
+            yanchor="top",
+            y=0.99,
+            xanchor="right",
+            x=0.99,
+            bgcolor="rgba(255,255,255,0.8)"
+        ),
+        plot_bgcolor='white',
+        paper_bgcolor='white'
+        )
+
+        # Add tighter axis ranges to eliminate padding
+        fig_scatter.update_xaxes(automargin=True)
+        fig_scatter.update_yaxes(automargin=True)
+        
+        fig_scatter.update_traces(
+            marker=dict(
+                opacity=1,
+                line=dict(width=0.75, color='black')
+            )
+        )
+        
+        st.plotly_chart(fig_scatter, use_container_width=True)
+        
+        # Show message if data was limited
+        if len(grouped_data) > MAX_DISPLAY:
+            st.info(f"ℹ️ Showing top {MAX_DISPLAY} of {len(grouped_data)} total {display_type.lower()} (sorted by Publications)")
+        
+        del fig_scatter
+        gc.collect()
+        st.caption(f"💡 Dot size represents number of publications. Hover over dots for detailed information.")
