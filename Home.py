@@ -891,9 +891,15 @@ else:
 
     with st.expander("Visualize Publications and Citations Mean", expanded=False):
         if len(grouped_data) > 0:
+            # Limit to top 50 for readability
+            MAX_DISPLAY = 500
+            
             if display_type == "Organizations":
                 plot_data = grouped_data.copy()
+                plot_data = plot_data.sort_values('Publications', ascending=False).head(MAX_DISPLAY)
                 plot_data = plot_data.sort_values('Citations Mean', ascending=True)
+                
+                subtitle = f"Top {len(plot_data)} Organizations" if len(grouped_data) > MAX_DISPLAY else "All Organizations"
 
                 fig_scatter = px.scatter(
                     plot_data,
@@ -901,17 +907,22 @@ else:
                     y='Organization',
                     size='Publications',
                     hover_data={
+                        'Country': True,
+                        'Authors': True,
                         'Publications': ':,',
                         'Citations': ':,',
                         'Citations Mean': ':.2f'
                     },
                     size_max=30,
-                    title=f'Organizations: Publications (dot size) vs Citations Mean',
+                    title=f'{subtitle}: Publications (dot size) vs Citations Mean',
                 )
                 
-            else:
+            else:  # Authors
                 plot_data = grouped_data.copy()
+                plot_data = plot_data.sort_values('Publications', ascending=False).head(MAX_DISPLAY)
                 plot_data = plot_data.sort_values('Citations Mean', ascending=True)
+                
+                subtitle = f"Top {len(plot_data)} Authors" if len(grouped_data) > MAX_DISPLAY else "All Authors"
                 
                 fig_scatter = px.scatter(
                     plot_data,
@@ -926,7 +937,7 @@ else:
                         'Citations Mean': ':.2f'
                     },
                     size_max=30,
-                    title=f'Authors: Publications (dot size) vs Citations Mean',
+                    title=f'{subtitle}: Publications (dot size) vs Citations Mean',
                 )
             
             fig_scatter.update_layout(
@@ -946,6 +957,11 @@ else:
             )
             
             st.plotly_chart(fig_scatter, use_container_width=True)
+            
+            # Show message if data was limited
+            if len(grouped_data) > MAX_DISPLAY:
+                st.info(f"ℹ️ Showing top {MAX_DISPLAY} of {len(grouped_data)} total {display_type.lower()} (sorted by Publications)")
+            
             del fig_scatter
             gc.collect()
             st.caption(f"💡 Dot size represents number of publications. Hover over dots for detailed information.")
