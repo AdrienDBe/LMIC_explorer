@@ -856,30 +856,6 @@ else:
         # Calculate available countries AFTER col_map1 block (so it's accessible later)
         available_countries_for_pills = [c for c in display_data['Country'].tolist() if c != 'Unknown']
 
-        # Country selector pills
-        if len(available_countries_for_pills) > 12:
-            with st.popover("🌍 Select Countries"):
-                selected_countries_pills = st.pills(
-                    "Filter by Countries:",
-                    options=["All"] + available_countries_for_pills,
-                    selection_mode="multi",
-                    default=["All"],
-                    key="countries_pills_input"
-                )
-        else:
-            selected_countries_pills = st.pills(
-                "Filter by Countries:",
-                options=["All"] + available_countries_for_pills,
-                selection_mode="multi",
-                default=["All"],
-                key="countries_pills_input"
-            )
-        
-        if "All" in selected_countries_pills and len(selected_countries_pills) > 1:
-            selected_countries_pills = [item for item in selected_countries_pills if item != "All"]
-        elif not selected_countries_pills:
-            selected_countries_pills = ["All"]
-
     with col_map2:
         fig_heatmap = px.choropleth(
             display_data,
@@ -977,9 +953,6 @@ else:
 
         
     st.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
-
-    # Get available countries for pills (after exclusion)
-    available_countries_for_pills = [c for c in display_data['Country'].tolist() if c != 'Unknown']
 
     # Search and display section
     search_col1, search_col2 = st.columns(2)
