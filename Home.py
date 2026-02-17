@@ -1,19 +1,13 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.io as pio
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 import numpy as np
 import os
-import requests
-from functools import lru_cache
 import time
 import gc
-import sys
 import tracemalloc
 
-# Start memory tracking
 tracemalloc.start()
 
 def get_memory_usage():
@@ -234,115 +228,23 @@ st.sidebar.markdown("")
 
 # --- CACHING FUNCTIONS ---
 
-@st.cache_data(ttl=3600)
-def load_world_bank_metadata():
-    """Load World Bank metadata with caching"""
-    try:
-        url = "http://api.worldbank.org/v2/country?per_page=400&format=json"
-        resp = requests.get(url, timeout=10)
-        data = resp.json()
-        records = []
-        for c in data[1]:
-            records.append({
-                "iso2c": c["id"],
-                "name": c["name"],
-                "region": c["region"]["value"],
-                "incomeLevel": c["incomeLevel"]["value"]
-            })
-        df_wb = pd.DataFrame(records)
-        df_wb = df_wb[df_wb['region'] != 'Aggregates']
-        return df_wb
-    except Exception as e:
-        st.warning(f"Failed to load World Bank data: {e}")
-        return pd.DataFrame(columns=["iso2c", "name", "region", "incomeLevel"])
-
-@st.cache_data
-def get_country_name_mapping():
-    """Return country name mapping as cached dictionary"""
-    return {
-        'Democratic Republic of the Congo': 'Congo, Dem. Rep.',
-        'Egypt': 'Egypt, Arab Rep.',
-        'Gambia': 'Gambia, The',
-        'Iran': 'Iran, Islamic Rep.',
-        'Ivory Coast': "Cote d'Ivoire",
-        'Kyrgyzstan': 'Kyrgyz Republic',
-        'Republic of the Congo': 'Congo, Rep.',
-        'Russia': 'Russian Federation',
-        'Saint Kitts and Nevis': 'St. Kitts and Nevis',
-        'Slovakia': 'Slovak Republic',
-        'South Korea': 'Korea, Rep.',
-        'Syria': 'Syrian Arab Republic',
-        'Taiwan': 'China',
-        'Turkey': 'Turkiye',
-        'Venezuela': 'Venezuela, RB',
-        'Vietnam': 'Viet Nam',
-        'Yemen': 'Yemen, Rep.',
-        'USA': 'United States',
-        'US': 'United States',
-        'UK': 'United Kingdom'
-    }
-
-@st.cache_data
-def optimize_dataframe_memory(df):
-    """Optimize DataFrame memory usage"""
-    optimized_df = df.copy()
-    for col in optimized_df.columns:
-        if optimized_df[col].dtype == 'object':
-            unique_ratio = len(optimized_df[col].unique()) / len(optimized_df)
-            if unique_ratio < 0.5:
-                optimized_df[col] = optimized_df[col].astype('category')
-    return optimized_df
-
 @st.cache_data
 def load_and_preprocess_data(filepath):
-    """Load the combined publications CSV file with preprocessing"""
+    """Load the LMIC-only CSV file"""
     try:
-        dtype_dict = {
-            'Name': 'string',
-            'Organization': 'string',
-            'Country': 'string',
-            'Publication type': 'string',
-            'Open Access': 'string'
-        }
+        df = pd.read_csv(filepath, low_memory=False)
         
-        df = pd.read_csv(filepath, low_memory=False, dtype=dtype_dict)
+        print(f"Loaded {len(df)} rows")
+        print(f"Columns: {list(df.columns)}")
         
-        initial_rows = len(df)
-        df = df.drop_duplicates(subset=['Name', 'Organization', 'Country', 'Publications'])
-        df = df[df['Country'] != '']
-        rows_removed = initial_rows - len(df)
-        if rows_removed > 0:
-            print(f"Removed {rows_removed} duplicate rows during preprocessing")
-        
-        country_name_mapping = get_country_name_mapping()
-        wb_countries = load_world_bank_metadata()
-        
-        if 'Country' in df.columns:
-            df['Country'] = df['Country'].map(
-                lambda x: country_name_mapping.get(x, x) if pd.notna(x) else x
-            )
-        
-        if not wb_countries.empty and 'Country' in df.columns:
-            df = df.merge(
-                wb_countries[['name', 'region', 'incomeLevel']], 
-                left_on='Country', 
-                right_on='name', 
-                how='left'
-            )
-            df = df.rename(columns={
-                'region': 'Region',
-                'incomeLevel': 'Income Level'
-            })
-            df['Income Level'] = df['Income Level'].replace('Not classified', 'Low income')
-            if 'name' in df.columns:
-                df = df.drop('name', axis=1)
-        
+        # Clean numeric columns
         numeric_columns = ['Publications', 'Citations', 'Citations Mean']
         for col in numeric_columns:
             if col in df.columns:
                 df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
         
-        text_columns = ['Name', 'Organization', 'Publication type', 'Open Access']
+        # Clean text columns
+        text_columns = ['Name', 'Organization', 'Publication type']
         for col in text_columns:
             if col in df.columns:
                 df[col] = df[col].fillna('Unknown').astype(str).str.strip()
@@ -351,18 +253,23 @@ def load_and_preprocess_data(filepath):
             df['Country'] = df['Country'].fillna('Unknown').astype(str).str.strip()
             df['Country'] = df['Country'].replace('', 'Unknown')
         
-        df = optimize_dataframe_memory(df)
-        return df, country_name_mapping
+        if 'Region' in df.columns:
+            df['Region'] = df['Region'].fillna('Unknown').astype(str).str.strip()
+        
+        if 'Income Level' in df.columns:
+            df['Income Level'] = df['Income Level'].fillna('Unknown').astype(str).str.strip()
+        
+        return df
         
     except Exception as e:
         st.error(f"Error loading data: {str(e)}")
-        return None, {}
+        return None
 
 @st.cache_data
 def get_unique_values(df, column):
     """Get unique values for a column with caching"""
     if column in df.columns:
-        return sorted(df[column].dropna().unique().tolist())
+        return sorted([str(x) for x in df[column].dropna().unique()])
     return []
 
 @st.cache_data
@@ -431,12 +338,9 @@ def get_country_coordinates():
         "Zimbabwe": {"lat": -19.0154, "lon": 29.1549}
     }
     
-def filter_data_by_selections(df, income_category, selected_income, selected_region, selected_pub_type, selected_oa):
-    """Apply filters to dataframe - NO CACHING"""
+def filter_data_by_selections(df, selected_income, selected_region, selected_pub_type):
+    """Apply filters to dataframe"""
     filtered_df = df.copy()
-
-    if 'All' not in selected_oa and selected_oa:
-        filtered_df = filtered_df[filtered_df['Open Access'].isin(selected_oa)]
 
     if 'All' not in selected_pub_type and selected_pub_type:
         filtered_df = filtered_df[filtered_df['Publication type'].isin(selected_pub_type)]
@@ -444,13 +348,13 @@ def filter_data_by_selections(df, income_category, selected_income, selected_reg
     if 'All' not in selected_region and selected_region and 'Region' in df.columns:
         filtered_df = filtered_df[filtered_df['Region'].isin(selected_region)]
 
-    if income_category == "LMIC" and selected_income and 'Income Level' in df.columns:
+    if 'All' not in selected_income and selected_income and 'Income Level' in df.columns:
         filtered_df = filtered_df[filtered_df['Income Level'].isin(selected_income)]
 
     return filtered_df
 
 def calculate_map_data(df, map_display_type, regional_hubs):
-    """Calculate country counts for map display - NO CACHING"""
+    """Calculate country counts for map display"""
     map_filtered_df = df.copy()
     
     if "All" not in regional_hubs and regional_hubs:
@@ -483,7 +387,7 @@ def calculate_map_data(df, map_display_type, regional_hubs):
     return country_counts, display_label, map_filtered_df
 
 def calculate_search_results(df, search_term, search_org, selected_countries_pills, regional_hubs):
-    """Calculate search results - NO CACHING"""
+    """Calculate search results"""
     search_results = df.copy()
     
     if "All" not in regional_hubs and regional_hubs:
@@ -511,7 +415,7 @@ def calculate_search_results(df, search_term, search_org, selected_countries_pil
     return search_results
     
 def process_grouped_data(search_results, display_type):
-    """Process grouped data - NO CACHING"""
+    """Process grouped data"""
     try:
         df = search_results.copy()
         
@@ -542,43 +446,16 @@ def process_grouped_data(search_results, display_type):
             return pd.DataFrame(), []
         
         if display_type == "Authors":
-            grouped_data = df.groupby(
-                ['Name', 'Organization', 'Country'],
-                as_index=False
-            ).agg({
-                'Publications': 'sum',
-                'Citations': 'sum'
-            })
-            
-            grouped_data['Citations Mean'] = (
-                grouped_data['Citations'] / grouped_data['Publications']
-            ).round(2)
-            
             display_cols = ['Name', 'Organization', 'Country', 'Publications', 'Citations', 'Citations Mean']
             
         else:
-            grouped_data = df.groupby(
-                ['Organization', 'Country'],
-                as_index=False
-            ).agg({
-                'Publications': 'sum',
-                'Citations': 'sum',
-                'Name': 'nunique'
-            })
-            
-            grouped_data = grouped_data.rename(columns={'Name': 'Authors'})
-            
-            grouped_data['Citations Mean'] = (
-                grouped_data['Citations'] / grouped_data['Publications']
-            ).round(2)
-            
-            display_cols = ['Organization', 'Country', 'Authors', 'Publications', 'Citations', 'Citations Mean']
+            display_cols = ['Organization', 'Country', 'Publications', 'Citations', 'Citations Mean']
 
-        grouped_data = grouped_data.sort_values('Publications', ascending=False)
-        grouped_data = grouped_data.reset_index(drop=True)
-        grouped_data = grouped_data.fillna(0)
+        df_display = df[display_cols].sort_values('Publications', ascending=False)
+        df_display = df_display.reset_index(drop=True)
+        df_display = df_display.fillna(0)
 
-        return grouped_data, display_cols
+        return df_display, display_cols
         
     except Exception as e:
         st.error(f"Error in process_grouped_data: {str(e)}")
@@ -609,14 +486,14 @@ def initialize_app():
     progress_bar = st.progress(0)
     status_text = st.empty()
     
-    default_path = "data/combined_all_publications_data_Final.csv"
+    default_path = "data/combined_all_publications_data_Final_LMIC_Only.csv"
     
     status_text.text("Loading data...")
     progress_bar.progress(25)
     
     try:
         if os.path.exists(default_path):
-            df, country_name_mapping = load_and_preprocess_data(default_path)
+            df = load_and_preprocess_data(default_path)
             data_path = default_path
         else:
             st.error(f"❌ File not found at {default_path}")
@@ -639,9 +516,9 @@ def initialize_app():
     progress_bar.empty()
     status_text.empty()
     
-    return df, country_name_mapping, data_path
+    return df, data_path
 
-df, country_name_mapping, data_path = initialize_app()
+df, data_path = initialize_app()
 
 @st.cache_data
 def get_filter_options(df):
@@ -658,26 +535,16 @@ def get_filter_options(df):
     else:
         options['pub_types'] = ['All']
     
-    if 'Open Access' in df.columns:
-        options['oa_types'] = ['All'] + get_unique_values(df, 'Open Access')
-    else:
-        options['oa_types'] = ['All']
-    
     if 'Income Level' in df.columns:
-        lmic_income_levels = ['Upper middle income', 'Lower middle income', 'Low income']
-        options['lmic_levels'] = [level for level in lmic_income_levels 
-                                 if level in df['Income Level'].dropna().unique()]
+        options['income_levels'] = ['All'] + get_unique_values(df, 'Income Level')
     else:
-        options['lmic_levels'] = []
+        options['income_levels'] = ['All']
     
     return options
 
 filter_options = get_filter_options(df)
 
 # === INITIALIZE FILTER STATE IN SESSION ===
-if 'income_category' not in st.session_state:
-    st.session_state.income_category = "All regions"
-
 if 'selected_income' not in st.session_state:
     st.session_state.selected_income = ['All']
 
@@ -694,30 +561,18 @@ if 'selected_pub_type' not in st.session_state:
 
 st.sidebar.markdown("### Filters")
 
-# Income Category
-income_category = st.sidebar.pills(
+# Filter by Income Category (renamed from "Narrow Income level")
+selected_income_raw = st.sidebar.pills(
     "Filter by Income Category:",
-    ["All regions", "LMIC"],
-    selection_mode="single",
-    key="income_category_input",
-    default="LMIC"
+    filter_options['income_levels'],
+    selection_mode="multi",
+    key="income_category_input"
 )
-st.session_state.income_category = income_category
-
-# Income Level (if LMIC selected)
-if income_category == "LMIC" and filter_options['lmic_levels']:
-    selected_income = st.sidebar.pills(
-        "Narrow Income level:",
-        filter_options['lmic_levels'],
-        selection_mode="multi",
-        key="income_level_input"
-    )
-    if not selected_income:
-        selected_income = filter_options['lmic_levels']
-    st.session_state.selected_income = selected_income
-else:
-    selected_income = ['All']
-    st.session_state.selected_income = selected_income
+selected_income = handle_all_selection(
+    tuple(selected_income_raw) if selected_income_raw else ('All',),
+    tuple(filter_options['income_levels'])
+)
+st.session_state.selected_income = selected_income
 
 st.sidebar.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
 
@@ -770,8 +625,7 @@ st.session_state.selected_pub_type = selected_pub_type
 
 # === APPLY FILTERS ===
 filtered_df = filter_data_by_selections(
-    df, income_category, selected_income, selected_region, 
-    selected_pub_type, ['All']
+    df, selected_income, selected_region, selected_pub_type
 )
 
 log_memory("After filtering")
@@ -915,7 +769,7 @@ else:
             available_orgs = get_unique_values(filtered_df, 'Organization')
             search_org = st.selectbox(
                 "Filter by Organization:",
-                options=['All'] + available_orgs[:100],
+                options=['All'] + available_orgs,
                 index=0
             )
         else:
@@ -1014,8 +868,6 @@ else:
                     y='Organization',
                     size='Publications',
                     hover_data={
-                        'Country': True,
-                        'Authors': True,
                         'Publications': ':,',
                         'Citations': ':,',
                         'Citations Mean': ':.2f'
