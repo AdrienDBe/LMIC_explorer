@@ -788,7 +788,7 @@ with col_hub_label:
     st.markdown("Regional Excellence Hub:")
 with col_hub_info:
     st.markdown(
-        '<span title="Organizations that provide scientific validation, technology translation, regional market access, and commercial collaboration pathways. These are not primary funders but are critical partners to gain regional access to researchers and institutes." style="cursor: help;">ℹ️</span>',
+        '',
         unsafe_allow_html=True,
         help="Organizations that provide scientific validation, technology translation, regional market access, and commercial collaboration pathways. These are not primary funders but are critical partners to gain regional access to researchers and institutes."
     )
@@ -999,8 +999,8 @@ else:
                     bgcolor="rgba(255,255,255,0.8)",
                     bordercolor="rgba(0,0,0,0.2)",
                     borderwidth=1)
-                )
-        )
+                    )
+            )
             
         
         st.plotly_chart(fig_heatmap, use_container_width=True)
