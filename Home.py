@@ -902,7 +902,7 @@ else:
     with st.expander("Visualize Publications and Citations Mean", expanded=False):
         if len(grouped_data) > 0:
             # Limit to top 50 for readability
-            MAX_DISPLAY = 500
+            MAX_DISPLAY = 200
             
             if display_type == "Organizations":
                 plot_data = grouped_data.copy()
