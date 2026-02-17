@@ -632,7 +632,6 @@ filtered_df = filter_data_by_selections(
     df, selected_income, selected_region, selected_pub_type
 )
 
-log_memory("After filtering")
 
 # --- MAIN CONTENT ---
 
