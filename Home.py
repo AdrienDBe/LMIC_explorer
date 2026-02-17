@@ -188,17 +188,6 @@ button.st-emotion-cache-b0zc2i.e1mwqyj910:hover {
     accent-color: #82C5E0 !important;
 }
 
-/* ==================== SLIDER STYLING ==================== */
-
-/* Slider thumb (the draggable circle) */
-[data-testid="stSlider"] [role="slider"] {
-    background-color: #82C5E0 !important;
-}
-
-/* Use accent-color for modern browsers */
-[data-testid="stSlider"] input[type="range"] {
-    accent-color: #82C5E0 !important;
-}
 
 button.st-emotion-cache-tx7mgd.e1mwqyj911,
 button.st-emotion-cache-tx7mgd.e1mwqyj911[kind="pillsActive"],
@@ -948,16 +937,6 @@ else:
             search_org = 'All'
 
     with search_col2:
-        # Number of clusters slider (will be applied after data processing)
-        n_clusters = st.slider(
-            "Number of Clusters:",
-            min_value=2,
-            max_value=10,
-            value=5,
-            step=1,
-            key="n_clusters_slider",
-            help="Adjust to see different groupings based on publications, citations, and region"
-        )
         st.caption("ℹ️ Clusters will group similar organizations/authors based on output and impact")
 
     available_countries_for_pills = get_unique_values(map_filtered_df, 'Country') if 'map_filtered_df' in locals() else get_unique_values(filtered_df, 'Country')
@@ -1003,13 +982,12 @@ else:
     # Process grouped data
     grouped_data, display_cols = process_grouped_data(search_results, display_type)
     
-    # Add clustering with user-selected number of clusters
+    # Add automatic clustering
     if len(grouped_data) > 0:
-        # Adjust max clusters based on data size
-        max_possible_clusters = min(10, max(2, len(grouped_data) // 10))
-        effective_n_clusters = min(n_clusters, max_possible_clusters)
+        # Determine optimal clusters based on data size (3-5 clusters)
+        auto_n_clusters = min(5, max(3, len(grouped_data) // 20))
         
-        grouped_data = add_clustering(grouped_data, display_type, n_clusters=effective_n_clusters)
+        grouped_data = add_clustering(grouped_data, display_type, n_clusters=auto_n_clusters)
         
         # Add cluster column to display
         if 'Suggested Cluster' in grouped_data.columns:
