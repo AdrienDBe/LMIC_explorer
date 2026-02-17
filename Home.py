@@ -725,7 +725,7 @@ else:
 
 # --- SIDEBAR FILTERS ---
 st.sidebar.markdown("# LMIC Explorer")
-st.sidebar,info("Researchers with 3+ publications; 3204 Immunology (Fields of Research ANZSRC 2020)")
+st.sidebar.info("Researchers with 3+ publications; 3204 Immunology (Fields of Research ANZSRC 2020)")
 
 
 # Filter by Income Category (renamed from "Narrow Income level")
