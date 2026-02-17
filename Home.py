@@ -8,38 +8,6 @@ import time
 import gc
 import tracemalloc
 
-tracemalloc.start()
-
-def get_memory_usage():
-    """Get current memory usage"""
-    current, peak = tracemalloc.get_traced_memory()
-    return current / 1024**2, peak / 1024**2
-
-def log_memory(label=""):
-    """Log memory usage"""
-    current, peak = get_memory_usage()
-    print(f"[MEMORY {label}] Current: {current:.1f}MB, Peak: {peak:.1f}MB")
-    return current, peak
-
-# Monitor rerun count
-if 'rerun_count' not in st.session_state:
-    st.session_state.rerun_count = 0
-    st.session_state.last_rerun_time = time.time()
-else:
-    st.session_state.rerun_count += 1
-    current_time = time.time()
-    if 'last_rerun_time' in st.session_state:
-        time_since_last = current_time - st.session_state.last_rerun_time
-        if time_since_last < 0.1 and st.session_state.rerun_count > 5:
-            st.error(f"⚠️ Detected rapid rerun loop. Pausing...")
-            time.sleep(0.5)
-            gc.collect()
-    st.session_state.last_rerun_time = current_time
-
-# Force cleanup every 2 reruns
-if st.session_state.rerun_count % 2 == 0:
-    gc.collect()
-
 # Emergency stop if too many reruns
 if st.session_state.rerun_count > 50:
     st.error("⚠️ Too many page reloads detected. Clearing cache...")
@@ -60,28 +28,25 @@ st.set_page_config(
     }
 )
 
-# Debug panel
-with st.sidebar.expander("🐛 Debug Info", expanded=False):
-    st.write(f"**Rerun count:** {st.session_state.rerun_count}")
-    current_mem, peak_mem = get_memory_usage()
-    st.write(f"**Memory:** {current_mem:.1f}MB / {peak_mem:.1f}MB")
-    
-    if st.button("Force Garbage Collection"):
-        gc.collect()
-        st.rerun()
-    
-    if st.button("Clear Cache"):
-        st.cache_data.clear()
-        st.cache_resource.clear()
-        gc.collect()
-        st.rerun()
-    
-    if st.button("Reset App"):
-        st.session_state.clear()
-        st.rerun()
-
 st.markdown("""
 <style>
+/* ==================== HIDE/FIX STREAMLIT TOP BAR ==================== */
+
+/* Hide the top toolbar completely */
+header[data-testid="stHeader"] {
+    display: none !important;
+}
+
+/* Remove top padding to prevent cutoff */
+.main .block-container {
+    padding-top: 2rem !important;
+}
+
+/* Ensure content starts at top */
+[data-testid="stAppViewContainer"] {
+    padding-top: 0 !important;
+}
+
 html, body {
     background-color: #FFFFFF !important;
     color: #262730 !important;
