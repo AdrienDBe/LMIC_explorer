@@ -162,19 +162,37 @@ button.st-emotion-cache-b0zc2i.e1mwqyj910:hover {
 }
 /* ==================== RADIO BUTTON CIRCLE COLOR ==================== */
 
-/* Radio button circle (the dot) */
-[data-testid="stRadio"] label span[data-baseweb="radio"] > div:first-child {
-    border-color: #82C5E0 !important;
+/* Radio button outer circle */
+input[type="radio"] {
+    accent-color: #82C5E0 !important;
 }
 
-/* Radio button filled circle when selected */
-[data-testid="stRadio"] label span[data-baseweb="radio"] > div:first-child > div {
+/* For browsers that don't support accent-color, use these: */
+[data-testid="stRadio"] input[type="radio"]:checked::before {
     background-color: #82C5E0 !important;
 }
 
-/* Radio button on hover */
-[data-testid="stRadio"] label:hover span[data-baseweb="radio"] > div:first-child {
-    border-color: #6BADCC !important;
+[data-testid="stRadio"] input[type="radio"]:checked {
+    background-color: #82C5E0 !important;
+    border-color: #82C5E0 !important;
+}
+
+/* Radio button circle using data-baseweb */
+div[data-baseweb="radio"] > div {
+    border-color: #D3D3D3 !important;
+}
+
+div[data-baseweb="radio"] > div > div {
+    background-color: #82C5E0 !important;
+}
+
+/* When radio is checked */
+input[type="radio"]:checked + div[data-baseweb="radio"] > div {
+    border-color: #82C5E0 !important;
+}
+
+input[type="radio"]:checked + div[data-baseweb="radio"] > div > div {
+    background-color: #82C5E0 !important;
 }
 
 /* ==================== SLIDER STYLING ==================== */
