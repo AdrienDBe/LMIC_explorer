@@ -1030,17 +1030,17 @@ else:
                     x='Citations Mean',
                     y='Organization',
                     size='Publications',
-                    color='Suggested Cluster',  # ADD THIS
+                    color='Suggested Cluster',
                     hover_data={
                         'Country': True,
                         'Authors': True,
                         'Publications': ':,',
                         'Citations': ':,',
                         'Citations Mean': ':.2f',
-                        'Suggested Cluster': True  # ADD THIS
+                        'Suggested Cluster': True
                     },
                     size_max=30,
-                    color_discrete_sequence=px.colors.qualitative.Safe  # ADD THIS
+                    color_discrete_sequence=['#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3', '#AA96DA', '#F38181', '#FCBAD3', '#A8D8EA', '#FFA07A', '#98D8C8']
                 )
                 
             else:  # Authors
@@ -1058,17 +1058,17 @@ else:
                     x='Citations Mean',
                     y='Name',
                     size='Publications',
-                    color='Suggested Cluster',  # ADD THIS
+                    color='Suggested Cluster',
                     hover_data={
                         'Organization': True,
                         'Country': True,
                         'Publications': ':,',
                         'Citations': ':,',
                         'Citations Mean': ':.2f',
-                        'Suggested Cluster': True  # ADD THIS
+                        'Suggested Cluster': True
                     },
                     size_max=30,
-                    color_discrete_sequence=px.colors.qualitative.Set2  # ADD THIS
+                    color_discrete_sequence=['#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3', '#AA96DA', '#F38181', '#FCBAD3', '#A8D8EA', '#FFA07A', '#98D8C8']
                 )
             
             fig_scatter.update_layout(
