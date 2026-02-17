@@ -322,7 +322,7 @@ def get_regional_hub_countries():
     return {
         "A*STAR SIgN": ["Singapore", "Indonesia", "Philippines", "Viet Nam", "Thailand", "Malaysia"],
         "Institut Pasteur Network": ["Algeria", "Argentina", "Brazil", "Cambodia", "Cameroon", "Central African Republic", 
-                                    "Chad", "China", "Côte d'Ivoire", "France", "French Guiana", "Gabon", "Greece", 
+                                    "Chad", "China", "Cote d'Ivoire", "France", "French Guiana", "Gabon", "Greece", 
                                     "Guatemala", "Iran, Islamic Rep.", "Iraq", "Korea, Rep.", "Laos", "Madagascar", "Mongolia", "Morocco", 
                                     "New Caledonia", "Niger", "Senegal", "Tunisia", "Uruguay"],
         "KEMRI-Wellcome": ["Kenya", "Uganda", "Tanzania", "Ethiopia"],
@@ -348,7 +348,7 @@ def get_country_coordinates():
         "Central African Republic": {"lat": 6.6111, "lon": 20.9394},
         "Chad": {"lat": 15.4542, "lon": 18.7322},
         "China": {"lat": 35.8617, "lon": 104.1954},
-        "Côte d'Ivoire": {"lat": 7.5399, "lon": -5.5471},
+        "Cote d'Ivoire": {"lat": 7.5399, "lon": -5.5471},
         "France": {"lat": 46.2276, "lon": 2.2137},
         "French Guiana": {"lat": 3.9339, "lon": -53.1258},
         "Gabon": {"lat": -0.8037, "lon": 11.6094},
