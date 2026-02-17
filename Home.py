@@ -783,12 +783,7 @@ elif not selected_countries_pills:
 st.sidebar.markdown("<hr style='margin:0.3rem 0;'>", unsafe_allow_html=True)
 
 # Regional Hubs with info tooltip
-col_hub_label, col_hub_info = st.sidebar.columns([4, 1])
-with col_hub_label:
-    st.markdown("Regional Excellence Hub:")
-with col_hub_info:
-    st.markdown(
-        '',
+st.sidebar.markdown("Regional Excellence Hub:",
         unsafe_allow_html=True,
         help="Organizations that provide scientific validation, technology translation, regional market access, and commercial collaboration pathways. These are not primary funders but are critical partners to gain regional access to researchers and institutes."
     )
