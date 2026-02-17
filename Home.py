@@ -7,6 +7,8 @@ import os
 import time
 import gc
 import tracemalloc
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
 
 def log_memory(label=""):
     """Log memory usage"""
@@ -516,6 +518,80 @@ def process_grouped_data(search_results, display_type):
         import traceback
         st.error(f"Traceback: {traceback.format_exc()}")
         return pd.DataFrame(), []
+
+def add_clustering(grouped_data, display_type):
+    """Add clustering based on Region, Publications, and Citations Mean"""
+    try:
+        df = grouped_data.copy()
+        
+        if len(df) < 3:  # Need at least 3 points for clustering
+            df['Suggested Cluster'] = 'Single Group'
+            return df
+        
+        # Prepare features for clustering
+        features_df = df[['Publications', 'Citations Mean']].copy()
+        
+        # Encode Region as numeric (if Country exists)
+        if 'Country' in df.columns:
+            # Create region groups (simplified)
+            region_map = {
+                'China': 0, 'India': 1, 'Brazil': 2, 'South Africa': 3, 
+                'Indonesia': 4, 'Philippines': 5, 'Thailand': 6, 'Vietnam': 7, 'Viet Nam': 7,
+                'Kenya': 8, 'Uganda': 8, 'Tanzania': 8, 'Ethiopia': 8,
+                'Argentina': 9, 'Mexico': 9,
+            }
+            df['Region_Code'] = df['Country'].map(region_map).fillna(10)
+            features_df['Region_Code'] = df['Region_Code']
+        else:
+            features_df['Region_Code'] = 0
+        
+        # Standardize features
+        scaler = StandardScaler()
+        features_scaled = scaler.fit_transform(features_df)
+        
+        # Determine optimal number of clusters (3-5 based on data size)
+        n_clusters = min(5, max(3, len(df) // 20))
+        
+        # Apply K-Means clustering
+        kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
+        df['Cluster'] = kmeans.fit_predict(features_scaled)
+        
+        # Create meaningful cluster names
+        cluster_summary = df.groupby('Cluster').agg({
+            'Publications': 'mean',
+            'Citations Mean': 'mean'
+        }).round(1)
+        
+        cluster_names = {}
+        for cluster_id in cluster_summary.index:
+            pubs = cluster_summary.loc[cluster_id, 'Publications']
+            cites = cluster_summary.loc[cluster_id, 'Citations Mean']
+            
+            if pubs > df['Publications'].quantile(0.75):
+                pub_level = "High Output"
+            elif pubs > df['Publications'].quantile(0.5):
+                pub_level = "Medium Output"
+            else:
+                pub_level = "Emerging"
+            
+            if cites > df['Citations Mean'].quantile(0.75):
+                cite_level = "High Impact"
+            elif cites > df['Citations Mean'].quantile(0.5):
+                cite_level = "Medium Impact"
+            else:
+                cite_level = "Growing Impact"
+            
+            cluster_names[cluster_id] = f"{pub_level}, {cite_level}"
+        
+        df['Suggested Cluster'] = df['Cluster'].map(cluster_names)
+        df = df.drop(columns=['Cluster', 'Region_Code'], errors='ignore')
+        
+        return df
+        
+    except Exception as e:
+        print(f"Clustering error: {str(e)}")
+        df['Suggested Cluster'] = 'Uncategorized'
+        return df
         
 def handle_all_selection(current_selection_tuple, all_options_tuple):
     """Handle 'All' selection logic"""
@@ -615,7 +691,7 @@ if 'selected_pub_type' not in st.session_state:
 
 # --- SIDEBAR FILTERS ---
 
-st.sidebar.markdown("### Filters")
+st.sidebar.markdown("### LMIC Explorer")
 
 # Filter by Income Category (renamed from "Narrow Income level")
 selected_income_raw = st.sidebar.pills(
@@ -876,11 +952,30 @@ else:
     
     # Process grouped data
     grouped_data, display_cols = process_grouped_data(search_results, display_type)
+    
+    # Add clustering
+    if len(grouped_data) > 0:
+        grouped_data = add_clustering(grouped_data, display_type)
+        # Add cluster column to display
+        if 'Suggested Cluster' in grouped_data.columns:
+            display_cols = display_cols + ['Suggested Cluster']
 
     with st.expander("View Detailed Table", expanded=False):
         if len(grouped_data) > 0:
             result_count = len(grouped_data)
-            st.write(f"Found {result_count} {display_type.lower()} matching your criteria")
+            
+            # Create columns for title and download button
+            col_title, col_download = st.columns([3, 1])
+            with col_title:
+                st.write(f"Found {result_count} {display_type.lower()} matching your criteria")
+            with col_download:
+                csv = grouped_data[display_cols].to_csv(index=False)
+                st.download_button(
+                    label="📥 Download CSV",
+                    data=csv,
+                    file_name=f"lmic_explorer_{display_type.lower()}_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                    mime="text/csv"
+                )
             
             display_results = grouped_data.copy()
             
@@ -935,14 +1030,17 @@ else:
                     x='Citations Mean',
                     y='Organization',
                     size='Publications',
+                    color='Suggested Cluster',  # ADD THIS
                     hover_data={
                         'Country': True,
                         'Authors': True,
                         'Publications': ':,',
                         'Citations': ':,',
-                        'Citations Mean': ':.2f'
+                        'Citations Mean': ':.2f',
+                        'Suggested Cluster': True  # ADD THIS
                     },
-                    size_max=30
+                    size_max=30,
+                    color_discrete_sequence=px.colors.qualitative.Set2  # ADD THIS
                 )
                 
             else:  # Authors
@@ -960,14 +1058,17 @@ else:
                     x='Citations Mean',
                     y='Name',
                     size='Publications',
+                    color='Suggested Cluster',  # ADD THIS
                     hover_data={
                         'Organization': True,
                         'Country': True,
                         'Publications': ':,',
                         'Citations': ':,',
-                        'Citations Mean': ':.2f'
+                        'Citations Mean': ':.2f',
+                        'Suggested Cluster': True  # ADD THIS
                     },
-                    size_max=30
+                    size_max=30,
+                    color_discrete_sequence=px.colors.qualitative.Set2  # ADD THIS
                 )
             
             fig_scatter.update_layout(
@@ -975,7 +1076,14 @@ else:
             margin=dict(l=200, r=60, t=40, b=40),  # t=0 for no top margin
             xaxis_title="Average Citations per Publication",
             yaxis_title=None,
-            showlegend=False,
+            showlegend=True,
+            legend=dict(
+                yanchor="top",
+                y=0.99,
+                xanchor="right",
+                x=0.99,
+                bgcolor="rgba(255,255,255,0.8)"
+            ),
             plot_bgcolor='white',
             paper_bgcolor='white'
             )
