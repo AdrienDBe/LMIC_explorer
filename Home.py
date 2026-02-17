@@ -160,16 +160,32 @@ button.st-emotion-cache-b0zc2i.e1mwqyj910:hover {
     color: #262730 !important;
     border: 1px solid #B0B0B0 !important;
 }
-/* ==================== RADIO BUTTON CIRCLE COLOR (SIMPLE) ==================== */
 
-/* Use accent-color only - simplest approach */
-[data-testid="stRadio"] input[type="radio"] {
-    accent-color: #82C5E0 !important;
+/* ==================== RADIO BUTTON CIRCLE COLOR (EXACT SELECTORS) ==================== */
+
+/* Target the inner filled circle using Streamlit's classes */
+.st-c5 {
+    background-color: #82C5E0 !important;
 }
 
-/* Backup for inner circle */
-[data-testid="stRadio"] [role="radio"] > div > div:last-child {
+/* Target the outer circle border when checked */
+.st-b1.st-c4 {
+    border-color: #82C5E0 !important;
+}
+
+/* Backup - target all radio inner circles */
+[data-testid="stRadio"] .st-c5 {
     background-color: #82C5E0 !important;
+}
+
+/* When radio is checked */
+[data-testid="stRadio"] input[type="radio"]:checked + div .st-c5 {
+    background-color: #82C5E0 !important;
+}
+
+/* Hover state */
+[data-testid="stRadio"] .st-b1:hover .st-c5 {
+    background-color: #6BADCC !important;
 }
 
 /* ==================== SLIDER STYLING ==================== */
