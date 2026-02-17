@@ -976,48 +976,43 @@ else:
         if 'Suggested Cluster' in grouped_data.columns:
             display_cols = display_cols + ['Suggested Cluster']
             
-            if display_type == "Organizations":
-                cluster_summary = grouped_data.groupby('Suggested Cluster').agg({
-                    'Organization': 'count',
-                    'Authors': 'sum',
-                    'Publications': 'sum',
-                    'Citations Mean': 'mean'
-                }).reset_index()
+            # Show cluster summary table in search_col2
+            with search_col2:
+                st.markdown("---")
+                st.markdown("**📊 Cluster Summary**")
                 
-                cluster_summary.columns = ['Cluster', 'Number of Organizations', 'Total Authors', 'Total Publications', 'Avg Citations per Publication']
+                if display_type == "Organizations":
+                    cluster_summary = grouped_data.groupby('Suggested Cluster').agg({
+                        'Organization': 'count',
+                        'Authors': 'sum',
+                        'Publications': 'sum',
+                        'Citations Mean': 'mean'
+                    }).reset_index()
+                    
+                    cluster_summary.columns = ['Cluster', '# Orgs', 'Authors', 'Pubs', 'Avg Cites']
+                    
+                else:  # Authors
+                    cluster_summary = grouped_data.groupby('Suggested Cluster').agg({
+                        'Name': 'count',
+                        'Publications': 'sum',
+                        'Citations Mean': 'mean'
+                    }).reset_index()
+                    
+                    cluster_summary.columns = ['Cluster', '# Authors', 'Pubs', 'Avg Cites']
                 
-            else:  # Authors
-                cluster_summary = grouped_data.groupby('Suggested Cluster').agg({
-                    'Name': 'count',
-                    'Publications': 'sum',
-                    'Citations Mean': 'mean'
-                }).reset_index()
+                # Round and format
+                cluster_summary['Avg Cites'] = cluster_summary['Avg Cites'].round(2)
                 
-                cluster_summary.columns = ['Cluster', 'Number of Authors', 'Total Publications', 'Avg Citations per Publication']
-            
-            # Round and format
-            cluster_summary['Avg Citations per Publication'] = cluster_summary['Avg Citations per Publication'].round(2)
-            
-            # Sort by Total Publications descending
-            cluster_summary = cluster_summary.sort_values('Total Publications', ascending=False)
-            
-            # Display as a nice table
-            st.dataframe(
-                cluster_summary,
-                hide_index=True,
-                use_container_width=True,
-                column_config={
-                    'Cluster': st.column_config.TextColumn('Cluster', width="large"),
-                    'Number of Organizations': st.column_config.NumberColumn('# Organizations', format="%d"),
-                    'Number of Authors': st.column_config.NumberColumn('# Authors', format="%d"),
-                    'Total Authors': st.column_config.NumberColumn('Total Authors', format="%d"),
-                    'Total Publications': st.column_config.NumberColumn('Total Publications', format="%d"),
-                    'Avg Citations per Publication': st.column_config.NumberColumn('Avg Citations/Pub', format="%.2f")
-                }
-            )
-            
-            st.markdown("---")
-
+                # Sort by Publications descending
+                cluster_summary = cluster_summary.sort_values('Pubs', ascending=False)
+                
+                # Display as a compact table
+                st.dataframe(
+                    cluster_summary,
+                    hide_index=True,
+                    use_container_width=True,
+                    height=200
+                )
     with st.expander("View Detailed Table", expanded=False):
         if len(grouped_data) > 0:
             result_count = len(grouped_data)
