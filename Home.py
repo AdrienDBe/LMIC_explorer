@@ -160,61 +160,48 @@ button.st-emotion-cache-b0zc2i.e1mwqyj910:hover {
     color: #262730 !important;
     border: 1px solid #B0B0B0 !important;
 }
-/* ==================== RADIO BUTTON STYLING ==================== */
+/* ==================== RADIO BUTTON CIRCLE COLOR ==================== */
 
-/* Radio button container */
-[data-testid="stRadio"] > div {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+/* Radio button circle (the dot) */
+[data-testid="stRadio"] label span[data-baseweb="radio"] > div:first-child {
+    border-color: #82C5E0 !important;
 }
 
-/* Radio button labels */
-[data-testid="stRadio"] label {
-    display: flex;
-    align-items: center;
-    padding: 0.5rem 1rem !important;
-    border-radius: 20px !important;
-    transition: all 0.2s ease !important;
-    cursor: pointer !important;
-    background-color: #F0F0F0 !important;
-    border: 1px solid #D3D3D3 !important;
-    font-weight: 500 !important;
-}
-
-/* Radio button labels on hover */
-[data-testid="stRadio"] label:hover {
-    background-color: #E8E8E8 !important;
-    border: 1px solid #B0B0B0 !important;
-}
-
-/* Hide the default radio circle */
-[data-testid="stRadio"] label input[type="radio"] {
-    display: none !important;
-}
-
-/* Style for checked radio button */
-[data-testid="stRadio"] label:has(input[type="radio"]:checked) {
+/* Radio button filled circle when selected */
+[data-testid="stRadio"] label span[data-baseweb="radio"] > div:first-child > div {
     background-color: #82C5E0 !important;
-    color: #FFFFFF !important;
-    border: 1px solid #82C5E0 !important;
-    font-weight: 600 !important;
 }
 
-/* Hover state for checked radio button */
-[data-testid="stRadio"] label:has(input[type="radio"]:checked):hover {
+/* Radio button on hover */
+[data-testid="stRadio"] label:hover span[data-baseweb="radio"] > div:first-child {
+    border-color: #6BADCC !important;
+}
+
+/* ==================== SLIDER STYLING ==================== */
+
+/* Slider track (the bar) */
+[data-testid="stSlider"] [data-baseweb="slider"] > div > div {
+    background-color: #E8E8E8 !important;
+}
+
+/* Slider filled track (the filled portion) */
+[data-testid="stSlider"] [data-baseweb="slider"] [role="slider"]::before {
+    background-color: #82C5E0 !important;
+}
+
+/* Slider thumb (the circle you drag) */
+[data-testid="stSlider"] [data-baseweb="slider"] [role="slider"] {
+    background-color: #82C5E0 !important;
+}
+
+/* Slider thumb on hover */
+[data-testid="stSlider"] [data-baseweb="slider"] [role="slider"]:hover {
     background-color: #6BADCC !important;
-    border: 1px solid #6BADCC !important;
 }
 
-/* Radio button text color */
-[data-testid="stRadio"] label span {
-    color: #262730 !important;
-}
-
-/* Radio button text color when selected */
-[data-testid="stRadio"] label:has(input[type="radio"]:checked) span {
-    color: #FFFFFF !important;
+/* Slider track fill */
+[data-testid="stSlider"] [data-baseweb="slider"] > div > div > div {
+    background-color: #82C5E0 !important;
 }
 button.st-emotion-cache-tx7mgd.e1mwqyj911,
 button.st-emotion-cache-tx7mgd.e1mwqyj911[kind="pillsActive"],
