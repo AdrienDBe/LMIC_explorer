@@ -829,6 +829,9 @@ filtered_df = filter_data_by_selections(
     df, selected_income, selected_region, selected_pub_type
 )
 
+# Apply country selection filter (from sidebar)
+if "All" not in selected_countries_pills and selected_countries_pills:
+    filtered_df = filtered_df[filtered_df['Country'].isin(selected_countries_pills)].copy()
 
 # --- MAIN CONTENT ---
 
