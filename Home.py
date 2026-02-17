@@ -8,14 +8,40 @@ import time
 import gc
 import tracemalloc
 
-# Emergency stop if too many reruns
-if st.session_state.rerun_count > 50:
-    st.error("⚠️ Too many page reloads detected. Clearing cache...")
-    st.cache_data.clear()
-    st.cache_resource.clear()
-    st.session_state.clear()
+def log_memory(label=""):
+    """Log memory usage"""
+    current, peak = get_memory_usage()
+    print(f"[MEMORY {label}] Current: {current:.1f}MB, Peak: {peak:.1f}MB")
+    return current, peak
+
+# Monitor rerun count
+if 'rerun_count' not in st.session_state:
     st.session_state.rerun_count = 0
-    st.stop()
+    st.session_state.last_rerun_time = time.time()
+else:
+    st.session_state.rerun_count += 1
+    current_time = time.time()
+    
+    # Emergency stop if too many reruns (MOVED INSIDE ELSE)
+    if st.session_state.rerun_count > 50:
+        st.error("⚠️ Too many page reloads detected. Clearing cache...")
+        st.cache_data.clear()
+        st.cache_resource.clear()
+        st.session_state.clear()
+        st.session_state.rerun_count = 0
+        st.stop()
+    
+    if 'last_rerun_time' in st.session_state:
+        time_since_last = current_time - st.session_state.last_rerun_time
+        if time_since_last < 0.1 and st.session_state.rerun_count > 5:
+            st.error(f"⚠️ Detected rapid rerun loop. Pausing...")
+            time.sleep(0.5)
+            gc.collect()
+    st.session_state.last_rerun_time = current_time
+
+# Force cleanup every 2 reruns
+if st.session_state.rerun_count % 2 == 0:
+    gc.collect()
 
 st.set_page_config(
     page_title="LMIC Explorer",
