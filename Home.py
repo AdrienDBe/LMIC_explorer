@@ -852,7 +852,10 @@ else:
         
         # Add log scale for visualization
         display_data['Log_Count'] = np.log10(display_data['Count'] + 1)
-                
+        
+        # Calculate available countries AFTER col_map1 block (so it's accessible later)
+        available_countries_for_pills = [c for c in display_data['Country'].tolist() if c != 'Unknown']
+
         # Country selector pills
         if len(available_countries_for_pills) > 12:
             with st.popover("🌍 Select Countries"):
