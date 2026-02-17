@@ -812,17 +812,8 @@ else:
         country_counts, display_label, map_filtered_df = calculate_map_data(
             filtered_df, map_display_type, regional_hubs
         )
-            
-        display_data = country_counts.copy()
-        display_data['Log_Count'] = np.log10(display_data['Count'] + 1)
-
-        st.markdown(f"Top 5 Countries (per {display_label}):")
-        st.dataframe(
-            display_data.head(5)[['Country', 'Count']],
-            hide_index=True,
-            height=200
-        )
-          # Exclude top countries option
+        
+        # Exclude top countries option (BEFORE processing display_data)
         with st.popover("⚙️ Exclude Top Countries"):
             exclude_top_n = st.number_input(
                 "Exclude top N countries:",
@@ -832,17 +823,35 @@ else:
                 step=1,
                 help="Remove the top performing countries from analysis"
             )
-            st.caption(f"Currently excluding: {exclude_top_n} countries")
+            if exclude_top_n > 0:
+                st.caption(f"✓ Excluding top {exclude_top_n} countries")
         
-        # Get available countries (excluding top N if specified)
+        # Apply exclusion filter
         if exclude_top_n > 0:
-            excluded_countries = display_data.head(exclude_top_n)['Country'].tolist()
-            available_countries_for_pills = [c for c in display_data['Country'].tolist() 
-                                             if c not in excluded_countries and c != 'Unknown']
-            if excluded_countries:
-                st.caption(f"🚫 Excluded: {', '.join(excluded_countries[:3])}{'...' if len(excluded_countries) > 3 else ''}")
+            excluded_countries = country_counts.head(exclude_top_n)['Country'].tolist()
+            display_data = country_counts[~country_counts['Country'].isin(excluded_countries)].copy()
+            
+            # Show excluded countries
+            st.caption(f"🚫 Excluded: {', '.join(excluded_countries[:5])}{'...' if len(excluded_countries) > 5 else ''}")
+            
+            # Also filter the map_filtered_df for downstream use
+            map_filtered_df = map_filtered_df[~map_filtered_df['Country'].isin(excluded_countries)].copy()
         else:
-            available_countries_for_pills = [c for c in display_data['Country'].tolist() if c != 'Unknown']
+            display_data = country_counts.copy()
+        
+        # Add log scale for visualization
+        display_data['Log_Count'] = np.log10(display_data['Count'] + 1)
+    
+        # Show Top 5 table
+        st.markdown(f"Top 5 Countries (per {display_label}):")
+        st.dataframe(
+            display_data.head(5)[['Country', 'Count']],
+            hide_index=True,
+            height=200
+        )
+        
+        # Get available countries for pills (after exclusion)
+        available_countries_for_pills = [c for c in display_data['Country'].tolist() if c != 'Unknown']
         
         # Country selector pills
         if len(available_countries_for_pills) > 12:
