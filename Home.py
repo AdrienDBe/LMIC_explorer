@@ -805,8 +805,7 @@ else:
             "Display Type:",
             options=["Publications", "Authors", "Organizations"],
             index=1,
-            key="map_display_type_radio",
-            Horizontal=True
+            key="map_display_type_radio"
         )
     
         # Calculate map data
