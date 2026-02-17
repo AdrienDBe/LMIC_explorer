@@ -813,18 +813,7 @@ else:
             filtered_df, map_display_type, regional_hubs
         )
         
-        # Show Top 5 table FIRST (before exclusion)
-        display_data_preview = country_counts.copy()
-        display_data_preview['Log_Count'] = np.log10(display_data_preview['Count'] + 1)
-        
-        st.markdown(f"Top 5 Countries (per {display_label}):")
-        st.dataframe(
-            display_data_preview.head(5)[['Country', 'Count']],
-            hide_index=True,
-            height=200
-        )
-        
-        # Exclude top countries option (RIGHT AFTER the table)
+        # Exclude top countries option (BEFORE showing the table)
         with st.popover("⚙️ Exclude Top Countries"):
             exclude_top_n = st.number_input(
                 "Exclude top N countries:",
@@ -837,7 +826,7 @@ else:
             if exclude_top_n > 0:
                 st.caption(f"✓ Excluding top {exclude_top_n} countries")
         
-        # Apply exclusion filter
+        # Apply exclusion filter FIRST
         if exclude_top_n > 0:
             excluded_countries = country_counts.head(exclude_top_n)['Country'].tolist()
             display_data = country_counts[~country_counts['Country'].isin(excluded_countries)].copy()
@@ -845,16 +834,28 @@ else:
             # Show excluded countries
             st.caption(f"🚫 Excluded: {', '.join(excluded_countries[:5])}{'...' if len(excluded_countries) > 5 else ''}")
             
-            # Also filter the map_filtered_df for downstream use
+            # Filter the map_filtered_df for downstream use
             map_filtered_df = map_filtered_df[~map_filtered_df['Country'].isin(excluded_countries)].copy()
+            
+            # Filter the main filtered_df for ALL downstream use
+            filtered_df = filtered_df[~filtered_df['Country'].isin(excluded_countries)].copy()
         else:
             display_data = country_counts.copy()
+            excluded_countries = []
         
         # Add log scale for visualization
         display_data['Log_Count'] = np.log10(display_data['Count'] + 1)
         
-        # Calculate available countries AFTER col_map1 block (so it's accessible later)
-        available_countries_for_pills = [c for c in display_data['Country'].tolist() if c != 'Unknown']
+        # NOW show Top 5 table (AFTER exclusion)
+        st.markdown(f"Top 5 Countries (per {display_label}):")
+        st.dataframe(
+            display_data.head(5)[['Country', 'Count']],
+            hide_index=True,
+            height=200
+        )
+    
+    # END of with col_map1 block - calculate available countries HERE
+    available_countries_for_pills = [c for c in display_data['Country'].tolist() if c != 'Unknown']
 
     with col_map2:
         fig_heatmap = px.choropleth(
