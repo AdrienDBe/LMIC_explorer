@@ -830,7 +830,7 @@ else:
     with col_map1:
         map_display_type = st.radio(
             "Visualize:",
-            options=["Publications", "Authors", "Organizations"],
+            options=["Authors", "Organizations"],
             index=1,
             horizontal=True,
             key="map_display_type_radio"
