@@ -1010,7 +1010,7 @@ with search_col1:
         search_org = 'All'
             
     display_type = search_col1.radio(
-        "Display Type:",
+        "Display details for:",
         options=["Organizations","Authors"],
         index=0,
         horizontal=True,
