@@ -830,11 +830,10 @@ else:
     with col_map1:
         map_display_type = st.radio(
             "Visualize:",
-            options=["Authors", "Organizations"],
+            options=["Organizations","Authors"],
             index=1,
             horizontal=True,
-            key="map_display_type_radio",
-            default="Organizations"
+            key="map_display_type_radio"
         )
     
         # Calculate map data
