@@ -809,7 +809,7 @@ selected_pub_type = handle_all_selection(
 )
 st.session_state.selected_pub_type = selected_pub_type
 
-st.sidebar.info("Researchers with 3+ publications; 3204 Immunology (Fields of Research ANZSRC 2020)")
+st.sidebar.info("Sample of researchers with 3+ publications; 3204 Immunology (Fields of Research ANZSRC 2020)")
 
 # === APPLY FILTERS ===
 filtered_df = filter_data_by_selections(
