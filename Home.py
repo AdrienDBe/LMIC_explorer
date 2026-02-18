@@ -831,7 +831,7 @@ else:
         map_display_type = st.radio(
             "Visualize:",
             options=["Organizations","Authors"],
-            index=1,
+            index=0,
             horizontal=True,
             key="map_display_type_radio"
         )
