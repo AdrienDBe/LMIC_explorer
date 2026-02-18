@@ -833,7 +833,8 @@ else:
             options=["Authors", "Organizations"],
             index=1,
             horizontal=True,
-            key="map_display_type_radio"
+            key="map_display_type_radio",
+            default="Organizations"
         )
     
         # Calculate map data
